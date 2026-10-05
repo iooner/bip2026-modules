@@ -14,7 +14,16 @@ kiosk\windows\install.bat module1
 ```
 (raccourci dans le dossier Démarrage + écran jamais en veille). Pour sortir : Alt+F4 puis fermer la fenêtre noire réduite.
 
-## Linux / Raspberry Pi OS
+## Raspberry Pi (recommandé)
+Matériel : Raspberry Pi 4 ou 5, Raspberry Pi OS Desktop, **adaptateur HDMI→VGA actif** (l'Elo est en VGA ;
+micro-HDMI sur Pi 4/5), câble USB de l'Elo pour le tactile.
+```
+git clone https://github.com/iooner/bip2026-modules && cd bip2026-modules
+./kiosk/linux/setup-pi.sh module1
+```
+Installe Chromium, CUPS et le pilote Dymo, active la connexion automatique et l'autorun.
+
+## Linux (autre)
 ```
 ./kiosk/linux/install.sh module1
 ```
