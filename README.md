@@ -7,4 +7,4 @@ statique lancée en kiosk sur sa borne (écran Elo 1024×768).
 |---|---|
 | `module1/` | Test de personnalité FR/EN + étiquette imprimée (Dymo 59×102 mm) |
 
-Voir le README de chaque module pour le lancement.
+Lancement automatique au démarrage : voir [`kiosk/`](kiosk/README.md).
