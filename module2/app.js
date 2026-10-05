@@ -1,13 +1,13 @@
 (() => {
   const C = window.CONFIG;
   const UI = {
-    fr: { hint: "Place-toi au centre\net regarde le miroir.",
+    fr: { hint: "Place-toi au centre\net prends ta plus belle pose !",
           take: "Prendre une photo", title: "Ton 360°",
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Voilà comment le miroir te voit.",
           error: "La photo n’a pas pu être prise. Réessaie dans un instant.",
           again: "Recommencer" },
-    en: { hint: "Stand in the middle\nand look into the mirror.",
+    en: { hint: "Stand in the middle\nand strike your best pose!",
           take: "Take a photo", title: "Your 360°",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "This is how the mirror sees you.",
