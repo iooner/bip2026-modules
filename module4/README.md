@@ -17,31 +17,30 @@ La page lit le corps envoyé par le pont. Si le pont ne répond pas, elle passe 
 virtuel), `webcam` (détection de pose MediaPipe dans le navigateur, internet requis). L'écran de la croix
 indique la source utilisée (`kinect` ou le mode de simulation). Le bouton « Je suis prêt·e » force le départ.
 
-## Pont capteur (`bridge/`)
+## Borne recommandée : petit PC Windows + Kinect v1
+
+Sous Windows, le **Kinect for Windows SDK 1.8** (Microsoft, gratuit) donne un vrai squelette
+(20 articulations) avec la Kinect Xbox 360. C'est la seule option avec squelette pour une v1.
+
+1. Windows 10/11, Chrome, imprimante Dymo par défaut, connexion automatique.
+2. Installer le Kinect for Windows SDK 1.8 (KinectSDK-v1.8-Setup.exe, site Microsoft).
+3. Brancher la Kinect avec son **adaptateur secteur** (USB + 12 V), sur un port USB 2.0 de préférence.
+   Tester avec « Kinect Developer Toolkit » ou simplement l'étape 4.
+4. `module4\bridge\windows\build.bat` (compile `KinectBridge.exe` avec le compilateur C# fourni avec Windows).
+5. `kiosk\windows\install.bat module4` : au démarrage, `kiosk.bat` lance le pont puis Chrome en kiosk.
+
+Placement : Kinect à ~1 m de haut, croix au sol à ~2,5 m (le corps entier doit être visible, portée 0,8–4 m).
+Le pont suit la personne la plus proche du centre.
+
+## Autres ponts (`bridge/kinect_bridge.py`, Linux / Raspberry Pi)
 
 ```
-python3 bridge/kinect_bridge.py --source freenect   # Kinect v1
+python3 bridge/kinect_bridge.py --source freenect   # Kinect v1 via libfreenect : pas de squelette,
+                                                    # tête/mains/pieds tirés de la silhouette en profondeur
 python3 bridge/kinect_bridge.py --source webcam     # webcam + MediaPipe (pip install opencv-python mediapipe)
 python3 bridge/kinect_bridge.py --source fake       # test sans matériel
 ```
-Options : `--near 1.2 --far 3.5` (zone où se trouve la personne, en mètres), `--smooth`, `--no-mirror`.
+Options : `--near 1.2 --far 3.5` (zone de la personne, en mètres), `--smooth`, `--no-mirror`.
+Installation Linux : `./kiosk/linux/setup-pi.sh module4 && ./module4/bridge/setup-pi.sh`.
 
-## Kinect et Raspberry Pi
-
-| Kinect | Sur Raspberry Pi | Squelette |
-|---|---|---|
-| **v1** (Xbox 360, modèles 1414/1473) | Oui, via libfreenect (paquets Debian). Pi 4 ou 5. | Non (le squelette Microsoft est Windows only) : on extrait tête, mains, pieds de la silhouette en profondeur. Suffisant pour la signature. |
-| **v2** (Xbox One) | Déconseillé : USB 3 + libfreenect2, décodage profondeur très lent sans GPU compatible, instable. | Non sous Linux. |
-
-Les deux modèles ont besoin de leur **alimentation secteur** (adaptateur Kinect USB + 12 V ; pour la v2,
-« Kinect Adapter for Windows »). Si c'est une v2 ou si on veut un vrai squelette : mini-PC Windows +
-Kinect SDK (pont à écrire, même format JSON), ou plus simple : une webcam + `--source webcam`.
-
-Installation sur la borne (Kinect v1) :
-```
-./kiosk/linux/setup-pi.sh module4
-./module4/bridge/setup-pi.sh
-```
-Placement conseillé : Kinect à ~1 m de haut, croix au sol à ~2,5 m (le corps entier doit être visible).
-
-**Non testé sur le matériel** : réglages `--near/--far` et détection des mains à ajuster sur place.
+**Non testé sur le matériel** : le pont Windows est compilé ici contre une maquette du SDK, pas avec une vraie Kinect.
