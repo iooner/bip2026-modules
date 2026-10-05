@@ -2,7 +2,7 @@
 
 Faux scanner d'aéroport. Le visiteur choisit FR/EN, vide ses poches ou son sac dans un bac et le glisse
 dans la machine. Un capteur (GPIO) déclenche une photo avec la Pi Camera, l'écran la « scanne » en rayons X
-puis affiche **CLEAR · Autorisé**, et une étiquette Dymo 59×102 mm s'imprime (photo scannée, n° de passage,
+puis affiche **AUTORISÉ (FR) / CLEAR (EN)**, et une étiquette Dymo 59×102 mm s'imprime (photo scannée, n° de passage,
 date, faux code-barres).
 
 ## Tester sans matériel

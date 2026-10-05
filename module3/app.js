@@ -8,7 +8,7 @@
                   "Glisse le bac dans le scanner.",
                   "Attends le verdict à l’écran."],
           waiting: "Le scanner attend ton bac…", simulate: "Simuler un passage",
-          scanning: "Analyse en cours…", clear: "Autorisé · Bonne visite !",
+          scanning: "Analyse en cours…", stamp: "AUTORISÉ", clear: "Bonne visite !", xray: "RAYONS X", restart: "Recommencer", locale: "fr-BE",
           printing: "Ton étiquette s’imprime : colle-la dans ton passeport. N’oublie pas tes affaires !",
           noprint: "N’oublie pas tes affaires !",
           label: "Vide ton sac", info: ["Passager", "Date", "Heure", "Porte"] },
@@ -17,7 +17,7 @@
                   "Slide the tray into the scanner.",
                   "Wait for the verdict on screen."],
           waiting: "The scanner is waiting for your tray…", simulate: "Simulate a pass",
-          scanning: "Scanning…", clear: "Cleared · Enjoy the show!",
+          scanning: "Scanning…", stamp: "CLEAR", clear: "Enjoy the exhibition!", xray: "X-RAY", restart: "Start again", locale: "en-GB",
           printing: "Your label is printing: stick it in your passport. Don’t forget your belongings!",
           noprint: "Don’t forget your belongings!",
           label: "Empty your bag", info: ["Passenger", "Date", "Time", "Gate"] },
@@ -76,6 +76,7 @@
     $("#steps .waiting span").textContent = t.waiting;
     const sim = $("#steps .simulate");
     sim.textContent = t.simulate; sim.hidden = !SIM;
+    $("#steps .restart").setAttribute("aria-label", t.restart);
   }
   document.querySelectorAll(".lang").forEach(b => b.addEventListener("click", () => {
     lang = b.dataset.lang; document.documentElement.lang = lang;
@@ -109,14 +110,17 @@
     const t = UI[lang], id = ++scanId;
     const n = nextCount(), now = new Date();
     const info = [String(n).padStart(4, "0"),
-                  now.toLocaleDateString("fr-BE", { day: "2-digit", month: "2-digit", year: "numeric" }),
-                  now.toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }), "✕"];
+                  now.toLocaleDateString(t.locale, { day: "2-digit", month: "2-digit", year: "numeric" }),
+                  now.toLocaleTimeString(t.locale, { hour: "2-digit", minute: "2-digit" }), "✕"];
     const dl = t.info.map((k, i) => `<dt>${k}</dt><dd>${info[i]}</dd>`).join("");
     $("#scan .kicker").textContent = t.kicker;
     $("#scan .info").innerHTML = dl;
     $("#scan .meta").textContent = `#${info[0]} · ${info[1]} ${info[2]}`;
     $("#scan .status span").textContent = t.scanning;
+    $("#scan .stamp b").textContent = t.stamp;
     $("#scan .stamp span").textContent = t.clear;
+    $("#scan .tag").textContent = t.xray;
+    $(".l-stamp b").textContent = "✓ " + t.stamp;
     $("#scan .printing").textContent = "";
     $(".l-title").textContent = t.label;
     $(".l-kicker").textContent = t.kicker;
@@ -177,7 +181,7 @@
     setTimeout(() => {
       if (id !== scanId) return;
       scan.className = "screen active cleared";
-      $("#scan .status span").textContent = "CLEAR";
+      $("#scan .status span").textContent = t.stamp;
       $("#scan .printing").textContent = C.PRINT ? t.printing : t.noprint;
       chime();
       if (C.PRINT) setTimeout(() => window.print(), 600);
