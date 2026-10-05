@@ -21,6 +21,7 @@ if not exist "%BROWSER%" set BROWSER=%ProgramFiles(x86)%\Microsoft\Edge\Applicat
 :loop
 start "" /wait "%BROWSER%" --kiosk --kiosk-printing --noerrdialogs --disable-infobars ^
   --disable-pinch --overscroll-history-navigation=0 --disable-session-crashed-bubble ^
+  --autoplay-policy=no-user-gesture-required ^
   --disable-features=Translate --no-first-run --user-data-dir="%PROFILE%" "%URL%"
 timeout /t 2 /nobreak >nul
 goto loop

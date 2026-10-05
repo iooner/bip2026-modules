@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720">
+<!-- Image d'exemple pour la simulation : bac vu de dessus (module 3, Vide ton sac) -->
+<defs><filter id="sh"><feDropShadow dx="4" dy="6" stdDeviation="5" flood-opacity=".35"/></filter>
+<radialGradient id="bg" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#ecebe7"/><stop offset="1" stop-color="#c9c7c1"/></radialGradient></defs>
+<rect width="960" height="720" fill="#8e8c86"/>
+<rect x="30" y="30" width="900" height="660" rx="40" fill="url(#bg)" stroke="#b3b1aa" stroke-width="10"/>
+<g transform="translate(250 200) rotate(-20)" filter="url(#sh)"><g><circle r="38" fill="none" stroke="#555" stroke-width="7"/>
+<path d="M30 10 h110 v14 h-12 v14 h-10 v-14 h-10 v18 h-10 v-18 h-68z" fill="#3a3a3a"/>
+<circle cx="18" cy="17" r="26" fill="#444"/><circle cx="18" cy="17" r="8" fill="#ddd"/>
+<g transform="rotate(115)"><path d="M30 0 h95 l10 8 l-10 8 h-95z" fill="#6a6a6a"/><circle cx="18" cy="8" r="24" fill="#2b2b2b"/><circle cx="18" cy="8" r="7" fill="#ddd"/></g></g></g>
+<g transform="translate(520 330) rotate(12)" filter="url(#sh)"><g><rect x="-75" y="-150" width="150" height="300" rx="22" fill="#1d1d1f"/>
+<rect x="-66" y="-140" width="132" height="280" rx="16" fill="#2a2e38"/>
+<rect x="-50" y="-120" width="40" height="40" rx="10" fill="#111"/><circle cx="-38" cy="-108" r="9" fill="#555"/><circle cx="-22" cy="-92" r="9" fill="#555"/>
+<rect x="-60" y="-20" width="120" height="8" fill="#151515"/><rect x="-30" y="60" width="60" height="50" rx="4" fill="#202020"/></g></g>
+<g transform="translate(760 190) rotate(-8)" filter="url(#sh)"><g><rect x="-115" y="-80" width="230" height="160" rx="14" fill="#7a4a2a"/>
+<rect x="-105" y="-70" width="210" height="140" rx="10" fill="none" stroke="#5a3218" stroke-width="3" stroke-dasharray="8 6"/>
+<rect x="-60" y="-55" width="150" height="95" rx="6" fill="#8d5a36"/><rect x="-45" y="-35" width="45" height="32" rx="4" fill="#3d3d3d"/></g></g>
+<g transform="translate(300 520) rotate(0)" filter="url(#sh)"><g><circle r="26" fill="#9a8a5a" stroke="#6e6237" stroke-width="4"/><circle cx="48" cy="14" r="22" fill="#b0a070" stroke="#6e6237" stroke-width="4"/>
+<circle cx="18" cy="52" r="30" fill="#8a7a4a" stroke="#5e5227" stroke-width="5"/></g></g>
+<g transform="translate(800 520) rotate(40)" filter="url(#sh)"><g><rect x="-16" y="-70" width="32" height="90" rx="4" fill="#222"/><rect x="-13" y="20" width="26" height="40" fill="#b5b5b5"/>
+<path d="M-11 60 h22 v24 l-22 -10z" fill="#a33"/></g></g>
+<g transform="translate(240 360) rotate(8)" filter="url(#sh)"><g fill="none" stroke="#2a2a2a" stroke-width="9"><ellipse cx="-62" cy="0" rx="52" ry="40" fill="#c9d6dc"/>
+<ellipse cx="62" cy="0" rx="52" ry="40" fill="#c9d6dc"/><path d="M-12 -6 q12 -14 24 0"/>
+<path d="M-114 -8 l-60 -50 M114 -8 l60 -50" stroke-width="6"/></g></g>
+</svg>
