@@ -1,0 +1,104 @@
+/* Polices : déposer les fichiers Helvetica Neue LT Std dans fonts/ (sinon repli Helvetica/Arial). */
+@font-face { font-family: "HNLT"; font-weight: 400; font-style: normal;
+  src: local("HelveticaNeueLTStd-Roman"), url("fonts/HelveticaNeueLTStd-Roman.otf"); }
+@font-face { font-family: "HNLT"; font-weight: 400; font-style: italic;
+  src: local("HelveticaNeueLTStd-It"), url("fonts/HelveticaNeueLTStd-It.otf"); }
+@font-face { font-family: "HNLT"; font-weight: 500; font-style: normal;
+  src: local("HelveticaNeueLTStd-Md"), url("fonts/HelveticaNeueLTStd-Md.otf"); }
+@font-face { font-family: "HNLT"; font-weight: 500; font-style: italic;
+  src: local("HelveticaNeueLTStd-MdIt"), url("fonts/HelveticaNeueLTStd-MdIt.otf"); }
+
+:root {
+  --pink: #deb6b4; --mauve: #98758b; --navy: #231f40; --grey: #a8a7a7;
+  --font: "HNLT", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+body { font-family: var(--font); color: #000; -webkit-user-select: none; user-select: none;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+body.nocursor, body.nocursor * { cursor: none !important; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+em { font-style: italic; }
+
+/* Scène fixe 1024×768 (écran Elo 4:3), mise à l'échelle par app.js */
+#stage { position: absolute; left: 50%; top: 50%; width: 1024px; height: 768px;
+  transform-origin: 0 0; overflow: hidden; background: var(--pink); }
+.screen { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .35s; }
+.screen.active { opacity: 1; pointer-events: auto; }
+
+.xbox { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+  border: 3px solid currentColor; font-size: 24px; font-weight: 500; line-height: 1; }
+
+/* Accueil */
+#welcome { background: var(--pink); }
+#welcome .lettering { position: absolute; left: 36px; top: 70px; height: 590px; }
+#welcome .side { position: absolute; right: 48px; top: 48px; bottom: 48px; width: 320px;
+  display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+#welcome .biennale { margin-top: 28px; font-size: 22px; line-height: 1.1; text-transform: uppercase; }
+#welcome h1 { margin-top: auto; font-size: 26px; font-weight: 500; line-height: 1.25; }
+#welcome h1 em { font-weight: 400; }
+#welcome .langs { margin-top: 28px; display: flex; flex-direction: column; gap: 18px; width: 100%; }
+.lang { height: 104px; background: var(--navy); color: #fff; font-size: 34px; font-weight: 500;
+  transition: transform .1s, background .1s; }
+.lang:active { transform: scale(.97); background: var(--mauve); }
+#welcome .dates { position: absolute; left: 48px; bottom: 30px; font-size: 18px; text-transform: uppercase; }
+
+/* Placement sur la croix */
+#place { background: linear-gradient(to bottom, var(--mauve), var(--pink)); color: #fff;
+  padding: 36px 56px 40px; display: flex; flex-direction: column; }
+#place header, #record .hint { display: flex; align-items: center; justify-content: space-between;
+  font-size: 18px; text-transform: uppercase; }
+#place h2 { margin-top: 26px; font-size: 40px; font-weight: 500; line-height: 1.1; }
+#place .sub { margin-top: 12px; font-size: 21px; line-height: 1.3; color: var(--navy); max-width: 860px; }
+#place .mirror { position: relative; align-self: center; margin-top: 22px; width: 560px; height: 420px;
+  background: var(--navy); }
+#place .live { position: absolute; inset: 0; }
+#place .floorx { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%) scaleY(.45);
+  font-size: 90px; line-height: 1; color: var(--pink); opacity: .8; }
+#place .hold { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; }
+#place .hold i, #record .bar i { display: block; height: 100%; width: 0; background: var(--pink); }
+#place footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
+#place .status { font-size: 18px; color: var(--navy); }
+.go { height: 64px; padding: 0 32px; background: var(--navy); color: #fff; font-size: 22px; font-weight: 500; }
+.go:active { background: #fff; color: var(--navy); }
+
+/* Enregistrement : la signature se dessine en direct */
+#record { background: var(--navy); color: #fff; }
+#record .draw { position: absolute; inset: 0; }
+#record .skel { position: absolute; right: 24px; top: 24px; border: 2px solid rgba(222,182,180,.5); }
+#record .hint { position: absolute; left: 56px; top: 40px; font-size: 26px; color: var(--pink); }
+#record .count { position: absolute; left: 56px; bottom: 50px; font-size: 140px; font-weight: 500; line-height: 1; }
+#record .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; background: rgba(255,255,255,.12); }
+
+/* Résultat */
+#result { background: var(--navy); color: #fff; padding: 48px 64px; display: flex; flex-direction: column; }
+#result .lettering.small { position: absolute; right: 48px; top: 36px; height: 150px; opacity: .9; }
+#result .title { font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: .02em; color: var(--pink); }
+#result .sig { margin: 40px 0 12px; width: 896px; height: 440px; }
+#result .meta { font-size: 18px; color: var(--pink); }
+#result footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+#result .printing { font-size: 20px; color: var(--grey); max-width: 600px; }
+.again { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
+.again:active { background: var(--mauve); color: #fff; }
+
+/* Étiquette : rendue hors écran, imprimée seule */
+#label { position: fixed; left: -10000px; top: 0; background: #fff; color: #000;
+  display: flex; flex-direction: column; overflow: hidden; font-family: var(--font); }
+#label .l-head { display: flex; align-items: center; gap: 2mm; border-bottom: .3mm solid #000;
+  padding-bottom: 1.5mm; margin-bottom: 2mm; font-size: 6.5pt; line-height: 1.2; text-transform: uppercase; }
+#label .l-head img { height: 11mm; }
+#label .l-head div { flex: 1; }
+#label .l-title { font-weight: 500; }
+#label .l-x { display: inline-flex; align-items: center; justify-content: center; width: 5mm; height: 5mm;
+  border: .4mm solid #000; font-size: 8pt; font-weight: 500; }
+#label .l-body { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#label .l-sig { max-width: 100%; max-height: 100%; }
+#label .l-foot { border-top: .3mm solid #000; padding-top: 1.5mm; margin-top: 2mm;
+  display: flex; flex-direction: column; gap: .5mm; font-size: 7pt; line-height: 1.2; }
+#label .l-meta { text-transform: uppercase; font-size: 6.5pt; }
+
+@media print {
+  html, body { width: auto; height: auto; overflow: visible; background: #fff; }
+  #stage { display: none; }
+  #label { position: static; }
+}
