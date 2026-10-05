@@ -6,7 +6,7 @@
             " secondes pour bouger. Tes mains, tes pieds et ta tête vont dessiner ta signature.",
           wait: "On te cherche…", hold: "Ne bouge plus…", go: "Je suis prêt·e",
           ready: ["Prêt·e ?", "Bouge !"], move: "Bouge ! Danse, écarte les bras, saute…",
-          resultTitle: "Ta signature corporelle", again: "Recommencer",
+          resultTitle: "Ta signature corporelle", again: "Recommencer", restart: "Recommencer", no: "N°",
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Voici ta signature !", label: "Signature corporelle",
           line: d => `Tes mains ont parcouru ${d} m.` },
@@ -15,7 +15,7 @@
             " seconds to move. Your hands, feet and head will draw your signature.",
           wait: "Looking for you…", hold: "Hold still…", go: "I’m ready",
           ready: ["Ready?", "Move!"], move: "Move! Dance, spread your arms, jump…",
-          resultTitle: "Your body signature", again: "Start again",
+          resultTitle: "Your body signature", again: "Start again", restart: "Start again", no: "No.",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "Here is your signature!", label: "Body signature",
           line: d => `Your hands travelled ${d} m.` },
@@ -62,6 +62,8 @@
     lang = b.dataset.lang;
     document.documentElement.lang = lang;
     document.querySelectorAll("[data-t]").forEach(el => { el.textContent = UI[lang][el.dataset.t]; });
+    $(".restart").setAttribute("aria-label", UI[lang].restart);
+    console.log("Source du corps :", T.sourceName());
     holdSince = 0; show("place"); poke();
   }));
   document.querySelectorAll(".restart, .again").forEach(b => b.addEventListener("click", reset));
@@ -85,7 +87,7 @@
       if (!ok) holdSince = 0;
       const p = holdSince ? Math.min(1, (now - holdSince) / (C.READY_HOLD_S * 1000)) : 0;
       $("#place .hold i").style.width = p * 100 + "%";
-      $("#place .status").textContent = (ok ? UI[lang].hold : UI[lang].wait) + "  ·  " + T.sourceName();
+      $("#place .status").textContent = ok ? UI[lang].hold : UI[lang].wait;
       if (p >= 1) startCountdown();
     } else if (phase === "record") {
       const el = (now - t0) / 1000;
@@ -123,7 +125,7 @@
     const d = new Date(), date = [d.getDate(), d.getMonth() + 1].map(v => String(v).padStart(2, "0")).join(".") + "." + d.getFullYear();
     // Champ horizontal Kinect v1 ≈ 2,7 m à 2,5 m de distance
     const meters = (S.handTravel(tracks) * 2.7).toFixed(1).replace(".", lang === "fr" ? "," : ".");
-    const meta = `N° ${String(n).padStart(4, "0")} · ${date}`;
+    const meta = `${t.no} ${String(n).padStart(4, "0")} · ${date}`;
 
     S.render($("#result .sig").getContext("2d"), tracks, { color: "#fff", width: 10 });
     $("#result .meta").textContent = t.line(meters) + "  " + meta;

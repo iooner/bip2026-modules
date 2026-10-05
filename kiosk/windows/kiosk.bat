@@ -11,6 +11,8 @@ if exist "%ROOT%\%MODULE%\server.py" (
   start "bip2026-server" /min python "%ROOT%\%MODULE%\server.py"
   set URL=http://127.0.0.1:8360/index.html
 )
+rem Module avec pont capteur (ex. module4 : Kinect), relance en boucle par son propre script
+if exist "%ROOT%\%MODULE%\bridge\windows\start.bat" start "bip2026-bridge" /min "%ROOT%\%MODULE%\bridge\windows\start.bat"
 set PROFILE=%LOCALAPPDATA%\bip2026-kiosk-%MODULE%
 
 set BROWSER=%ProgramFiles%\Google\Chrome\Application\chrome.exe
