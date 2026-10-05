@@ -3,6 +3,8 @@
 Même principe pour les 4 modules : à l'ouverture de session, Chrome/Chromium s'ouvre en plein écran
 (`--kiosk`) sur `moduleN/index.html`, imprime sans dialogue (`--kiosk-printing`), et une boucle le relance
 s'il se ferme ou plante.
+Si le module a un `server.py` (module2 : relais des caméras), il est lancé aussi et la page s'ouvre
+sur `http://127.0.0.1:8360/` (Python 3, déjà présent sur Raspberry Pi OS).
 
 Pré-requis : session avec **connexion automatique**, imprimante d'étiquettes **par défaut**, Chrome installé
 (Windows) ou Chromium (Linux / Raspberry Pi).

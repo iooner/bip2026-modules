@@ -8,6 +8,15 @@ URL="file://$ROOT/$MODULE/index.html"
 PROFILE="$HOME/.cache/bip2026-kiosk-$MODULE"
 BROWSER="$(command -v chromium || command -v chromium-browser || command -v google-chrome)"
 
+# Module avec serveur local (ex. module2 : relais des caméras IP) : lancé et relancé en tâche de fond
+if [ -f "$ROOT/$MODULE/server.py" ]; then
+  PORT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("port", 8360))' "$ROOT/$MODULE/cameras.json")"
+  URL="http://127.0.0.1:$PORT/index.html"
+  ( while true; do python3 "$ROOT/$MODULE/server.py"; sleep 2; done ) &
+  trap 'kill 0' EXIT
+  sleep 1
+fi
+
 # Pas de mise en veille de l'écran (X11 ; sans effet sous Wayland)
 xset s off -dpms s noblank 2>/dev/null || true
 

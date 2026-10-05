@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Miroir Miroir · 360°</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+
+  <section id="welcome" class="screen active">
+    <img class="lettering" src="assets/miroir-noir.png" alt="Miroir Miroir">
+    <div class="side">
+      <div class="xbox">✕</div>
+      <p class="biennale">Biennale<br>de l’image<br>possible<br>2026</p>
+      <h1 class="big">360°</h1>
+      <div class="langs">
+        <button class="lang" data-lang="fr">Français</button>
+        <button class="lang" data-lang="en">English</button>
+      </div>
+    </div>
+    <p class="dates">17.10 – 13.12 / Liège (BE)</p>
+  </section>
+
+  <section id="shoot" class="screen">
+    <header>
+      <span class="name">360°</span>
+      <button class="xbox restart" aria-label="Recommencer">✕</button>
+    </header>
+    <p class="hint"></p>
+    <button class="take"></button>
+    <div class="countdown"></div>
+    <div class="flash"></div>
+  </section>
+
+  <section id="result" class="screen">
+    <img class="lettering small" src="assets/miroir-blanc.png" alt="">
+    <h2 class="title"></h2>
+    <div class="photobox"><img class="photo" alt=""></div>
+    <footer>
+      <p class="printing"></p>
+      <button class="again"></button>
+    </footer>
+  </section>
+
+</div>
+
+<!-- Étiquette : invisible à l'écran, seule chose imprimée -->
+<div id="label">
+  <div class="l-head">
+    <img src="assets/miroir-noir.png" alt="">
+    <div><span class="l-title">360°</span><br>BIP 2026 · Liège</div>
+    <span class="l-x">✕</span>
+  </div>
+  <img class="l-photo" alt="">
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
