@@ -1,17 +1,17 @@
 (() => {
   const C = window.CONFIG;
   const UI = {
-    fr: { hint: "Place-toi au centre et regarde autour de toi.\nQuatre caméras cachées te regardent.",
+    fr: { hint: "Place-toi au centre\net regarde le miroir.",
           take: "Prendre une photo", title: "Ton 360°",
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Voilà comment le miroir te voit.",
-          error: "Les caméras ne répondent pas. Réessaie dans un instant.",
+          error: "La photo n’a pas pu être prise. Réessaie dans un instant.",
           again: "Recommencer" },
-    en: { hint: "Stand in the middle and look around.\nFour hidden cameras are watching you.",
+    en: { hint: "Stand in the middle\nand look into the mirror.",
           take: "Take a photo", title: "Your 360°",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "This is how the mirror sees you.",
-          error: "The cameras are not answering. Try again in a moment.",
+          error: "The photo could not be taken. Try again in a moment.",
           again: "Start again" },
   };
   const $ = (s, el = document) => el.querySelector(s);
