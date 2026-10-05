@@ -1,0 +1,31 @@
+// Réglages du module 2 (360°). Modifier ici, puis recharger la page.
+// Les adresses des caméras sont dans cameras.json (lu par server.py, pas par le navigateur).
+window.CONFIG = {
+  // Étiquette Dymo S0947420 (LabelWriter 4XL/5XL) : 59 × 102 mm, portrait.
+  LABEL_WIDTH_MM: 59,
+  LABEL_HEIGHT_MM: 102,
+  LABEL_MARGIN_MM: 3,
+  LABEL_HEAD_MM: 15,      // hauteur réservée à l'en-tête (logo + titre)
+  LABEL_DPI: 300,         // résolution de l'image envoyée à l'imprimante
+  LABEL_FILTER: "grayscale(1) contrast(1.15)", // rendu sur l'étiquette (imprimante noir et blanc)
+
+  // "random" : 1 caméra tirée au hasard. "quad" : les 4 recadrées en grille 2×2.
+  LAYOUT: "random",
+  CAMERA_COUNT: 4,
+  SNAPSHOT_URL: "snap/",  // servi par server.py : snap/1 … snap/4
+  // Recadrage par caméra : centre (x, y de 0 à 1) et zoom (1 = image entière).
+  // À régler sur place pour que la personne soit au centre.
+  CROP: [
+    { x: 0.5, y: 0.5, zoom: 1.6 },
+    { x: 0.5, y: 0.5, zoom: 1.6 },
+    { x: 0.5, y: 0.5, zoom: 1.6 },
+    { x: 0.5, y: 0.5, zoom: 1.6 },
+  ],
+  DEMO: true,             // caméra injoignable : image de test au lieu d'une erreur (false en expo)
+
+  COUNTDOWN_S: 3,         // compte à rebours avant la prise de vue
+  PRINT: true,            // lance l'impression
+  IDLE_TIMEOUT_S: 60,     // retour à l'accueil si personne ne touche l'écran
+  RESULT_SCREEN_S: 30,    // durée de l'écran final avant retour à l'accueil
+  HIDE_CURSOR: false,     // true sur la borne tactile
+};

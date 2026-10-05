@@ -6,6 +6,11 @@ if "%MODULE%"=="" set MODULE=module1
 set ROOT=%~dp0..\..
 for %%I in ("%ROOT%") do set ROOT=%%~fI
 set URL=file:///%ROOT:\=/%/%MODULE%/index.html
+rem Module avec serveur local (ex. module2 : relais des cameras IP, port 8360 par defaut)
+if exist "%ROOT%\%MODULE%\server.py" (
+  start "bip2026-server" /min python "%ROOT%\%MODULE%\server.py"
+  set URL=http://127.0.0.1:8360/index.html
+)
 set PROFILE=%LOCALAPPDATA%\bip2026-kiosk-%MODULE%
 
 set BROWSER=%ProgramFiles%\Google\Chrome\Application\chrome.exe

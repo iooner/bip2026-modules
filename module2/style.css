@@ -1,0 +1,91 @@
+/* Polices : déposer les fichiers Helvetica Neue LT Std dans fonts/ (sinon repli Helvetica/Arial). */
+@font-face { font-family: "HNLT"; font-weight: 400; font-style: normal;
+  src: local("HelveticaNeueLTStd-Roman"), url("fonts/HelveticaNeueLTStd-Roman.otf"); }
+@font-face { font-family: "HNLT"; font-weight: 400; font-style: italic;
+  src: local("HelveticaNeueLTStd-It"), url("fonts/HelveticaNeueLTStd-It.otf"); }
+@font-face { font-family: "HNLT"; font-weight: 500; font-style: normal;
+  src: local("HelveticaNeueLTStd-Md"), url("fonts/HelveticaNeueLTStd-Md.otf"); }
+@font-face { font-family: "HNLT"; font-weight: 500; font-style: italic;
+  src: local("HelveticaNeueLTStd-MdIt"), url("fonts/HelveticaNeueLTStd-MdIt.otf"); }
+
+:root {
+  --pink: #deb6b4; --mauve: #98758b; --navy: #231f40; --grey: #a8a7a7;
+  --font: "HNLT", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+body { font-family: var(--font); color: #000; -webkit-user-select: none; user-select: none;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+body.nocursor, body.nocursor * { cursor: none !important; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+em { font-style: italic; }
+
+/* Scène fixe 1024×768 (écran Elo 4:3), mise à l'échelle par app.js */
+#stage { position: absolute; left: 50%; top: 50%; width: 1024px; height: 768px;
+  transform-origin: 0 0; overflow: hidden; background: var(--pink); }
+.screen { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .35s; }
+.screen.active { opacity: 1; pointer-events: auto; }
+
+.xbox { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+  border: 3px solid currentColor; font-size: 24px; font-weight: 500; line-height: 1; }
+
+/* Accueil */
+#welcome { background: var(--pink); }
+#welcome .lettering { position: absolute; left: 36px; top: 70px; height: 590px; }
+#welcome .side { position: absolute; right: 48px; top: 48px; bottom: 48px; width: 320px;
+  display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+#welcome .biennale { margin-top: 28px; font-size: 22px; line-height: 1.1; text-transform: uppercase; }
+#welcome h1 { margin-top: auto; font-size: 26px; font-weight: 500; line-height: 1.25; }
+#welcome h1 em { font-weight: 400; }
+#welcome .langs { margin-top: 28px; display: flex; flex-direction: column; gap: 18px; width: 100%; }
+.lang { height: 104px; background: var(--navy); color: #fff; font-size: 34px; font-weight: 500;
+  transition: transform .1s, background .1s; }
+.lang:active { transform: scale(.97); background: var(--mauve); }
+#welcome .dates { position: absolute; left: 48px; bottom: 30px; font-size: 18px; text-transform: uppercase; }
+
+#welcome h1.big { font-size: 96px; letter-spacing: -.02em; }
+
+/* Prise de vue */
+#shoot { background: linear-gradient(to bottom, var(--mauve), var(--pink)); color: #fff;
+  padding: 36px 56px 56px; display: flex; flex-direction: column; align-items: center; }
+#shoot header { align-self: stretch; display: flex; align-items: center; justify-content: space-between;
+  font-size: 18px; text-transform: uppercase; }
+#shoot .hint { margin-top: 90px; font-size: 34px; font-weight: 500; line-height: 1.25; text-align: center; white-space: pre-line; }
+.take { margin-top: auto; width: 560px; height: 160px; background: var(--navy); color: #fff;
+  font-size: 40px; font-weight: 500; transition: transform .1s, background .1s; }
+.take:active { transform: scale(.97); background: var(--mauve); }
+#shoot .countdown { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(35,31,64,.85); font-size: 300px; font-weight: 500; }
+#shoot.counting .countdown { display: flex; }
+#shoot .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+#shoot.flashing .flash { animation: flash .6s ease-out; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+
+/* Résultat */
+#result { background: var(--navy); color: #fff; padding: 48px 64px; display: flex; flex-direction: column; }
+#result .lettering.small { position: absolute; right: 48px; top: 36px; height: 150px; opacity: .9; }
+#result .title { font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: .02em; color: var(--pink); }
+#result .photobox { flex: 1; margin: 16px 0 24px; display: flex; justify-content: center; min-height: 0; }
+#result .photo { height: 100%; border: 6px solid #fff; }
+#result footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+#result .printing { font-size: 20px; color: var(--grey); max-width: 600px; }
+.again { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
+.again:active { background: var(--mauve); color: #fff; }
+
+/* Étiquette : rendue hors écran, imprimée seule */
+#label { position: fixed; left: -10000px; top: 0; background: #fff; color: #000;
+  display: flex; flex-direction: column; overflow: hidden; font-family: var(--font); }
+#label .l-head { flex: none; display: flex; align-items: center; gap: 2mm; border-bottom: .3mm solid #000;
+  padding-bottom: 1.5mm; margin-bottom: 0; font-size: 6.5pt; line-height: 1.2; text-transform: uppercase; }
+#label .l-head img { height: 11mm; }
+#label .l-head div { flex: 1; }
+#label .l-title { font-weight: 500; font-size: 9pt; }
+#label .l-x { display: inline-flex; align-items: center; justify-content: center; width: 5mm; height: 5mm;
+  border: .4mm solid #000; font-size: 8pt; font-weight: 500; }
+#label .l-photo { display: block; object-fit: cover; }
+
+@media print {
+  html, body { width: auto; height: auto; overflow: visible; background: #fff; }
+  #stage { display: none; }
+  #label { position: static; }
+}
