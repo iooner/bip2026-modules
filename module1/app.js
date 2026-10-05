@@ -60,6 +60,7 @@
   function renderQuestion() {
     const qs = DATA[lang].questions, q = qs[step];
     $("#question .count").textContent = UI[lang].count(step + 1, qs.length);
+    $(".restart").setAttribute("aria-label", UI[lang].again);
     $("#question .dots").innerHTML = qs.map((_, i) => `<i class="${i <= step ? "on" : ""}"></i>`).join("");
     $("#question .q").textContent = q.q;
     const box = $("#question .answers");
