@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Miroir Miroir · Vide ton sac</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+
+  <section id="welcome" class="screen active">
+    <img class="lettering" src="assets/miroir-noir.png" alt="Miroir Miroir">
+    <div class="side">
+      <div class="xbox">✕</div>
+      <p class="biennale">Biennale<br>de l’image<br>possible<br>2026</p>
+      <h1>Vide ton sac<br><em>Empty your bag</em></h1>
+      <div class="langs">
+        <button class="lang" data-lang="fr">Français</button>
+        <button class="lang" data-lang="en">English</button>
+      </div>
+    </div>
+    <p class="dates">17.10 – 13.12 / Liège (BE)</p>
+  </section>
+
+  <section id="steps" class="screen">
+    <header>
+      <span class="kicker"></span>
+      <button class="xbox restart" aria-label="Recommencer">✕</button>
+    </header>
+    <h2 class="title"></h2>
+    <ol class="list"></ol>
+    <footer>
+      <p class="waiting"><i class="lamp"></i><span></span></p>
+      <button class="simulate" hidden></button>
+    </footer>
+  </section>
+
+  <section id="scan" class="screen">
+    <div class="monitor">
+      <div class="view">
+        <canvas id="xray" width="960" height="720"></canvas>
+        <div class="beam"></div>
+        <div class="stamp"><b>CLEAR</b><span></span></div>
+      </div>
+      <p class="caption"><span class="tag">X-RAY</span><span class="meta"></span></p>
+    </div>
+    <aside>
+      <img class="lettering small" src="assets/miroir-blanc.png" alt="">
+      <p class="kicker"></p>
+      <dl class="info"></dl>
+      <p class="status"><i class="lamp"></i><span></span></p>
+      <p class="printing"></p>
+    </aside>
+  </section>
+
+</div>
+
+<!-- Indicateur discret : le petit serveur du Pi ne répond pas -->
+<div id="offline" hidden>helper ✕</div>
+
+<!-- Étiquette : invisible à l'écran, seule chose imprimée -->
+<div id="label">
+  <div class="l-head">
+    <img src="assets/miroir-noir.png" alt="">
+    <div><span class="l-title"></span><br>BIP 2026 · Liège</div>
+    <span class="l-x">✕</span>
+  </div>
+  <p class="l-kicker"></p>
+  <canvas class="l-img" width="640" height="480"></canvas>
+  <div class="l-stamp"><b>✓ CLEAR</b><span></span></div>
+  <dl class="l-info"></dl>
+  <canvas class="l-code" width="600" height="60"></canvas>
+</div>
+
+<!-- Filtres « rayons X » appliqués à la photo (paramètres réglés par app.js) -->
+<svg width="0" height="0" style="position:absolute">
+  <filter id="f-xray" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer class="tone">
+      <feFuncR type="linear"/><feFuncG type="linear"/><feFuncB type="linear"/>
+    </feComponentTransfer>
+    <!-- Palette de scanner : dense = bleu nuit, métal = bleu, inorganique = vert, organique = orange, vide = blanc -->
+    <feComponentTransfer>
+      <feFuncR type="table" tableValues="0.08 0.18 0.31 0.89 0.97 1"/>
+      <feFuncG type="table" tableValues="0.07 0.37 0.64 0.60 0.93 1"/>
+      <feFuncB type="table" tableValues="0.20 0.68 0.42 0.27 0.84 0.98"/>
+    </feComponentTransfer>
+    <feGaussianBlur stdDeviation="0.6" result="img"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .18 -.05"/>
+    <feComposite in2="img" operator="in" result="grain"/>
+    <feMerge><feMergeNode in="img"/><feMergeNode in="grain"/></feMerge>
+  </filter>
+  <filter id="f-print" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer class="tone">
+      <feFuncR type="linear"/><feFuncG type="linear"/><feFuncB type="linear"/>
+    </feComponentTransfer>
+  </filter>
+</svg>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

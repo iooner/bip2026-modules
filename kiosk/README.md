@@ -5,6 +5,8 @@ Même principe pour les 4 modules : à l'ouverture de session, Chrome/Chromium s
 s'il se ferme ou plante.
 Si le module a un `server.py` (module2 : relais des caméras), il est lancé aussi et la page s'ouvre
 sur `http://127.0.0.1:8360/` (Python 3, déjà présent sur Raspberry Pi OS).
+Si le module a un `helper/helper.py` (module3 : capteur GPIO + Pi Camera), il tourne à côté de la page
+(journal dans `/tmp/bip2026-moduleN-helper.log`).
 
 Pré-requis : session avec **connexion automatique**, imprimante d'étiquettes **par défaut**, Chrome installé
 (Windows) ou Chromium (Linux / Raspberry Pi).
