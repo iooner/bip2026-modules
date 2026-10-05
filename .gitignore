@@ -1,0 +1,6 @@
+# Polices sous licence : ne pas publier
+*.otf
+*.ttf
+*.woff
+*.woff2
+.DS_Store
