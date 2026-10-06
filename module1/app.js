@@ -4,11 +4,11 @@
     fr: { count: (i, n) => `Question ${i} / ${n}`, title: "Ton portrait",
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Note ton portrait dans ton passeport !",
-          again: "Recommencer", label: "Test de personnalité" },
+          again: "Recommencer", label: "Le vrai test psychométrique" },
     en: { count: (i, n) => `Question ${i} / ${n}`, title: "Your portrait",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "Keep your portrait in mind!",
-          again: "Start again", label: "Personality test" },
+          again: "Start again", label: "The Real Psychometric Test" },
   };
   const $ = (s, el = document) => el.querySelector(s);
   const stage = $("#stage");
