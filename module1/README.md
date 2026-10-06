@@ -1,4 +1,4 @@
-# Module 1 · Test de personnalité (Miroir Miroir, BIP 2026)
+# Module 1 · Le vrai test psychométrique (Miroir Miroir, BIP 2026)
 
 App web statique, sans serveur ni dépendance : ouvrir `index.html`.
 
