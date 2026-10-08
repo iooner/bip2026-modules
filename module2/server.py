@@ -31,7 +31,7 @@ if SECRET.exists():
             _c["user"], _c["password"] = _s.get("user", ""), _s.get("password", "")
 TIMEOUT = CFG.get("timeout_s", 8)
 LIVE = CFG.get("live", True)              # connexion RTSP permanente (sinon une connexion par photo)
-DECODE = CFG.get("decode", "key")         # "key" : images clés seules (peu de CPU) ; "all" : toutes
+DECODE = CFG.get("decode", "all")         # "all" : toutes les images ; "key" : images clés seules (peu de CPU)
 LIVE_FPS = CFG.get("live_fps", 4)         # en mode "all" : images gardées par seconde
 SNAP_WAIT = CFG.get("snap_wait_s", 2)     # attente max d'une image prise après le clic
 STALE = 10                                # au-delà (s), la dernière image est trop vieille

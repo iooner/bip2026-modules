@@ -17,7 +17,7 @@ sur `http://127.0.0.1:8360/`. Il refuse de servir `cameras.json`.
 
 ## Caméras : `cameras.json`
 Caméras retenues : **Tapo C110**. Elles n'ont pas d'URL snapshot HTTP, seulement un flux RTSP :
-`server.py` en extrait une image avec **ffmpeg** (installé par `setup-pi.sh`). Une caméra vide ou injoignable
+`server.py` en extrait une image avec **ffmpeg**. Une caméra vide ou injoignable
 est ignorée. Les 4 caméras (IP 192.168.1.172, .9, .180, .131) sont déjà dans `cameras.json`.
 
 **Identifiants : jamais dans git.** Créer à côté, sur la borne, `module2/cameras.secret.json` (ignoré par git) :
@@ -42,8 +42,9 @@ Prévoir une IP fixe par caméra (réservation DHCP dans la box/le routeur).
 `server.py` garde une connexion RTSP ouverte par caméra et décode en continu ; au clic, chaque caméra rend la
 première image clé qui suit (moins d'1 s, les 4 en même temps), au lieu de 3 à 4 s par connexion. Coupure
 réseau ou caméra débranchée : reconnexion automatique. Réglages optionnels dans `cameras.json` :
-- `"decode": "key"` (défaut) : seules les images clés sont décodées, très peu de CPU sur le Pi.
-  `"all"` : toutes les images, `live_fps` gardées par seconde (plus réactif, beaucoup plus de CPU).
+- `"decode": "all"` (défaut, borne = mini PC) : toutes les images sont décodées, `live_fps` (4) gardées par
+  seconde ; la photo est prise moins de 0,3 s après le clic. `"key"` : images clés seules, très peu de CPU
+  (machine faible type Raspberry Pi), mais la photo attend l'image clé suivante.
 - `"snap_wait_s": 2` : attente max d'une image prise après le clic, sinon la plus récente.
 - `"live": false` : ancien mode, une connexion par photo. `timeout_s` : délai max de ce mode.
 
@@ -58,7 +59,10 @@ soit au centre. `LAYOUT: "quad"` pour la grille de 4. `DEMO: true` remplace une 
 de test (mettre `false` en expo pour afficher un message d'erreur à la place).
 
 ## Lancer
-- Borne : `./kiosk/linux/setup-pi.sh module2` (le kiosk démarre `server.py` tout seul, voir [`kiosk/`](../kiosk/README.md)).
+- Borne (mini PC) : installer **Python 3** et **ffmpeg** (Windows : `winget install Python.Python.3.12 Gyan.FFmpeg` ;
+  Linux : `sudo apt install python3 ffmpeg`), puis l'autorun `kiosk\windows\install.bat module2` ou
+  `./kiosk/linux/install.sh module2`.
+- Raspberry Pi : `./kiosk/linux/setup-pi.sh module2` (le kiosk démarre `server.py` tout seul, voir [`kiosk/`](../kiosk/README.md)).
 - Test sur un poste : `python3 server.py` puis ouvrir http://127.0.0.1:8360/.
   En ouvrant `index.html` directement (sans serveur), le mode démo affiche 4 images de test.
 
