@@ -159,6 +159,19 @@ LIVES = {}
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def send_header(self, key, value):
+        if key.lower() == "cache-control":
+            self._cache_set = True
+        super().send_header(key, value)
+
+    def end_headers(self):
+        # Fichiers de l'app : le navigateur revalide à chaque chargement, sinon il garde l'ancienne version
+        # (index.html, app.js, config.js…) après une mise à jour de la borne.
+        if not getattr(self, "_cache_set", False):
+            super().send_header("Cache-Control", "no-cache")
+        self._cache_set = False
+        super().end_headers()
+
     def do_GET(self):
         path = self.path.split("?")[0]
         if path.startswith("/snap/"):
