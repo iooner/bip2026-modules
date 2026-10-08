@@ -35,6 +35,8 @@ DECODE = CFG.get("decode", "all")         # "all" : toutes les images ; "key" : 
 LIVE_FPS = CFG.get("live_fps", 4)         # en mode "all" : images gardées par seconde
 SNAP_WAIT = CFG.get("snap_wait_s", 2)     # attente max d'une image prise après le clic
 STALE = 10                                # au-delà (s), la dernière image est trop vieille
+GRACE = 20                                # au démarrage (s), une caméra pas encore connectée n'est pas absente
+STARTED = time.monotonic()
 
 
 def rtsp_url(cam):
@@ -123,6 +125,10 @@ class Live(threading.Thread):
         for line in p.stderr:
             self.error = line.decode(errors="replace").strip().replace(self.url, self.cam["url"])
 
+    def alive(self):
+        """La caméra a envoyé une image il y a moins de STALE secondes."""
+        return self.frame is not None and time.monotonic() - self.at < STALE
+
     def snap(self):
         """Image prise après la demande (attente max SNAP_WAIT), sinon la dernière si récente."""
         t = time.monotonic()
@@ -157,9 +163,30 @@ class Handler(SimpleHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path.startswith("/snap/"):
             return self.snap(path[6:])
+        if path == "/cameras":
+            return self.cameras()
         if path.endswith(".json") or path.endswith(".py"):   # identifiants des caméras
             return self.send_error(404)
         return super().do_GET()
+
+    def cameras(self):
+        """Présence des caméras : [{"n": 1, "ok": true|false|null, "error": "…"}] (null = pas de flux continu).
+        Une caméra est absente si son flux RTSP n'a rien envoyé depuis STALE s (après GRACE s de démarrage)."""
+        starting = time.monotonic() - STARTED < GRACE
+        out = []
+        for i, cam in enumerate(CAMS):
+            if not cam.get("url"):
+                continue
+            live = LIVES.get(i)
+            ok = None if live is None else (live.alive() or (starting and live.frame is None))
+            out.append({"n": i + 1, "ok": ok, "error": None if ok or live is None else live.error})
+        data = json.dumps(out).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
 
     def snap(self, n):
         if not n.isdigit() or not 1 <= int(n) <= len(CAMS):

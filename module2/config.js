@@ -13,6 +13,9 @@ window.CONFIG = {
   LAYOUT: "random",
   CAMERA_COUNT: 4,
   SNAPSHOT_URL: "snap/",  // servi par server.py : snap/1 … snap/4
+  CAMERAS_URL: "cameras", // présence des caméras (server.py) ; "" pour ne pas vérifier
+  CAMERA_CHECK_S: 5,      // fréquence de la vérification
+  CAMERAS_DOWN_OK: 1,     // caméras absentes tolérées sans bandeau (au-delà : « pause technique »)
   // Recadrage par caméra : l'image est toujours coupée au format de la zone photo de l'étiquette,
   // centrée sur (x, y de 0 à 1). zoom 1 = bande centrale pleine hauteur (848×1296 px sur C110).
   // À régler sur place pour que la personne soit au centre.
