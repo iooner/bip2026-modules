@@ -63,7 +63,7 @@
     build();
     const forced = new URLSearchParams(location.search).get("panne");
     if (forced) local.set("essai", forced);
-    poll(); setInterval(poll, 8000);
+    poll(); setInterval(poll, 2000);
     // L'écran actif change sans prévenir : on suit la classe « active » de l'accueil
     const home = document.querySelector("#welcome");
     if (home) new MutationObserver(refresh).observe(home, { attributes: true, attributeFilter: ["class"] });
