@@ -10,7 +10,7 @@ Rien n'apparaît à l'écran. Si ce service ne tourne pas, les modules reviennen
                                      lu par status.js de chaque module (bandeau « en panne » sur l'accueil)
 Lancé par kiosk/linux/kiosk.sh. Essai sans imprimer : BIP_NO_LP=1 python3 kiosk/print_server.py
 """
-import json, os, select, shutil, subprocess, sys, threading, time
+import json, os, re, select, shutil, subprocess, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(os.environ.get("BIP_PRINT_PORT", 8361))   # autre port : essais sans toucher au service de la borne
@@ -49,29 +49,79 @@ def problems():
     if old:
         out.append({"code": "file", "detail": f"{old} étiquette(s) bloquée(s) dans la file de {name} "
                                               "(rouleau vide, imprimante éteinte ou débranchée ?)"})
+    out += printer_problems(name)
+    # Pilote d'impression installé différent de celui du dépôt : mise à jour du dépôt faite sans réinstaller le pilote
+    repo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "linux", "tspl", "rastertotspl-bip")
+    inst = "/usr/lib/cups/filter/rastertotspl-bip"
+    try:
+        if os.path.exists(inst) and open(repo, "rb").read() != open(inst, "rb").read():
+            out.append({"code": "pilote", "detail": "pilote d'impression pas à jour : lancer ./kiosk/linux/update.sh "
+                                                    f"(ou sudo install -m 755 {repo} /usr/lib/cups/filter/)"})
+    except OSError:
+        pass
     if LAST["error"]:
         out.append({"code": "impression", "detail": LAST["error"]})
     return out
 
 
-def printer_message():
-    """Après une impression, lit ce que l'imprimante renvoie sur l'USB (la LW650XL PRO écrit des lignes du type
-    « SSSGETPRINTING:DOING »). Seulement journalisé pour l'instant : sert à reconnaître « plus d'étiquettes »."""
+PRINTER = {"paper": None, "cap": None, "absent": 0}   # dernier état donné par l'imprimante ; absent = nb de lectures ratées
+DEV = "/dev/usb/lp0"
+
+
+def ask_printer():
+    """Interroge la LW650XL PRO sur l'USB. Elle répond en clair : « SSSGETPAPER » -> SSSGETPAPER:YES|NO,
+    « SSSGETCAP » -> SSSGETCAP:OPEN|CLOSE (elle ne connaît pas la requête d'état TSPL « ESC !? »). Elle écrit aussi
+    ces lignes d'elle-même quand on ouvre le capot ou que le rouleau manque.
+    Pendant une impression CUPS tient l'USB : l'ouverture échoue, on garde le dernier état."""
     try:
-        fd = os.open("/dev/usb/lp0", os.O_RDONLY | os.O_NONBLOCK)
-    except OSError:
+        fd = os.open(DEV, os.O_RDWR | os.O_NONBLOCK)
+    except FileNotFoundError:
+        PRINTER["absent"] += 1                       # débranchée ou éteinte
         return
+    except OSError:
+        return                                       # occupée (impression en cours)
     try:
-        data = b""
-        while select.select([fd], [], [], 0.3)[0]:
-            data += os.read(fd, 256)
-        if data:
-            LAST["printer_msg"] = data.decode("latin-1").strip()
-            print("Imprimante :", LAST["printer_msg"], flush=True)
+        text = b""
+        for q in (b"SSSGETPAPER\r\n", b"SSSGETCAP\r\n"):
+            os.write(fd, q)
+            end = time.time() + 1.5
+            while time.time() < end and not text.endswith(b"\n"):
+                if select.select([fd], [], [], 0.3)[0]:
+                    text += os.read(fd, 256)
+            text += b" "
+        said = dict(re.findall(r"SSSGET([A-Z]+):([A-Z]+)", text.decode("latin-1")))
+        if "PAPER" in said:
+            PRINTER["paper"] = said["PAPER"] == "YES"
+        if "CAP" in said:
+            PRINTER["cap"] = said["CAP"] == "CLOSE"
+        PRINTER["absent"] = 0
+        msg = " / ".join(text.decode("latin-1").split())
+        if msg != LAST["printer_msg"]:
+            LAST["printer_msg"] = msg
+            print("Imprimante :", msg, flush=True)
     except OSError:
         pass
     finally:
         os.close(fd)
+
+
+def watch_printer():
+    if not os.path.exists("/dev/usb"):               # pas d'imprimante USB de ce type sur cette borne
+        return
+    while True:
+        ask_printer()
+        time.sleep(4)
+
+
+def printer_problems(name):
+    out = []
+    if PRINTER["absent"] >= 3:
+        out.append({"code": "imprimante", "detail": f"{name} débranchée ou éteinte (USB absent)"})
+    if PRINTER["paper"] is False:
+        out.append({"code": "etiquettes", "detail": f"{name} : plus d'étiquettes (rouleau vide ou mal engagé)"})
+    if PRINTER["cap"] is False:
+        out.append({"code": "capot", "detail": f"{name} : capot ouvert"})
+    return out
 
 
 def print_label(html):
@@ -95,7 +145,6 @@ def print_label(html):
         else:
             subprocess.run(["lp", pdf], timeout=20, check=True, stdout=subprocess.DEVNULL)
             print("Étiquette envoyée à l'imprimante", flush=True)
-            threading.Timer(12, printer_message).start()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -133,6 +182,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    threading.Thread(target=watch_printer, daemon=True).start()
     try:
         ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
     except OSError as e:
