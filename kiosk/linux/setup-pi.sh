@@ -6,8 +6,8 @@ MODULE="${1:?usage: setup-pi.sh moduleN}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 sudo apt-get update
-sudo apt-get install -y chromium-browser cups printer-driver-dymo || \
-  sudo apt-get install -y chromium cups printer-driver-dymo
+sudo apt-get install -y chromium-browser cups printer-driver-dymo ffmpeg || \
+  sudo apt-get install -y chromium cups printer-driver-dymo ffmpeg
 sudo usermod -aG lpadmin "$USER"
 
 # Connexion automatique au bureau + pas de mise en veille de l'écran
