@@ -207,8 +207,11 @@
     let cams;
     try {
       const r = await fetch(C.CAMERAS_URL, { cache: "no-store" });
-      cams = (await r.json()).filter(c => c.ok !== null);
+      cams = await r.json();
     } catch { return; }              // page ouverte sans server.py (essai) : rien à vérifier
+    // Bulles d'état en haut à gauche de l'accueil : vert = images reçues, rouge = absente, gris = inconnu
+    $("#cams").innerHTML = cams.map(c => `<i class="${c.ok === null ? "" : c.ok ? "ok" : "down"}"></i>`).join("");
+    cams = cams.filter(c => c.ok !== null);
     const down = cams.filter(c => !c.ok);
     const ids = down.map(c => c.n).join(", ");
     const outage = down.length && (down.length > C.CAMERAS_DOWN_OK || down.length === cams.length);
