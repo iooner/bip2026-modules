@@ -22,7 +22,7 @@ window.CONFIG = {
     { x: 0.5, y: 0.5, zoom: 1 },
     { x: 0.5, y: 0.5, zoom: 1 },
   ],
-  DEMO: true,             // caméra injoignable : image de test au lieu d'une erreur (false en expo)
+  DEMO: false,            // caméra injoignable : image de test au lieu d'une erreur (false en expo)
 
   SHOT_DELAY_MS: 1500,    // attente entre la fin du décompte et la capture : augmenter si la photo est prise trop tôt, 0 si trop tard
   COUNTDOWN_S: 3,         // compte à rebours avant la prise de vue
