@@ -20,6 +20,15 @@
 
   // --- Pont Kinect ---
   let sock = null;
+  // Aucune image du pont depuis 15 s (Kinect débranchée, pont arrêté ou figé) : bandeau « en panne » sur l'accueil.
+  // Le pont envoie une image ~30 fois par seconde même sans personne. CONFIG.REQUIRE_KINECT: false pour s'en passer.
+  const loaded = performance.now();
+  if (C.BRIDGE_URL && C.REQUIRE_KINECT !== false) setInterval(() => {
+    if (!window.KioskStatus) return;
+    if (performance.now() - (bridgeAt || loaded) > 15000)
+      KioskStatus.report("kinect", "aucune image de la Kinect depuis 15 s (" + C.BRIDGE_URL + ") : Kinect débranchée ou pont arrêté");
+    else if (bridgeAt) KioskStatus.clear("kinect");
+  }, 2000);
   function connect() {
     let ws;
     try { ws = new WebSocket(C.BRIDGE_URL); } catch { return setTimeout(connect, 2000); }

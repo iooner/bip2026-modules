@@ -33,5 +33,17 @@ Installe Chromium, CUPS et le pilote Dymo, active la connexion automatique et l'
 ```
 Pour sortir : Alt+F4 puis `pkill -f kiosk.sh`.
 
+## Mettre une borne à jour
+```
+./kiosk/linux/update.sh
+```
+Met à jour le dépôt et réinstalle le pilote d'impression s'il a changé, puis redémarrer la borne.
+Si on oublie le pilote, la borne le dit elle-même : bandeau « pause technique » avec la ligne `pilote : … pas à jour`.
+
+## Bandeau « en panne »
+Quand l'impression ou le matériel d'un module est hors service, l'accueil est grisé et barré d'un bandeau qui invite
+à prévenir l'équipe ; la cause est écrite en petit en bas de l'écran (`etiquettes`, `capot`, `file`, `imprimante`,
+`service`, `pilote`, `kinect`, `scanner`, `cameras`). Il disparaît seul quand tout remarche. Essai : `?panne=texte`.
+
 ## Tester sans installer
 `kiosk\windows\kiosk.bat module1` ou `./kiosk/linux/kiosk.sh module1`.
