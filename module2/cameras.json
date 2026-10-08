@@ -1,6 +1,6 @@
 {
   "port": 8360,
-  "timeout_s": 6,
+  "timeout_s": 8,
   "exemple_tapo": "rtsp://192.168.1.101:554/stream1",
   "cameras": [
     { "url": "", "user": "", "password": "" },

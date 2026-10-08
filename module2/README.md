@@ -35,7 +35,13 @@ Prévoir une IP fixe par caméra (réservation DHCP dans la box/le routeur).
 5. Remplir `cameras.json`, lancer `python3 server.py`, ouvrir http://127.0.0.1:8360/snap/1 (image de la caméra 1),
    puis http://127.0.0.1:8360/ pour le parcours complet. Les erreurs s'affichent dans le terminal du serveur.
 
-Une prise de vue RTSP prend 2 à 3 s (connexion au flux). `timeout_s` : délai max par caméra.
+Une prise de vue RTSP prend 3 à 4 s (connexion au flux + attente d'une image clé complète). `timeout_s` :
+délai max par caméra.
+
+### Qualité d'image
+Le serveur prend la première image clé de `stream1` en JPEG qualité max. Si l'image reste moyenne, c'est la
+source : app Tapo > ⚙ > **Qualité vidéo** sur la plus haute (2K/3MP), éclairage suffisant (sinon la caméra passe
+en vision nocturne noir et blanc granuleuse : mode nuit sur « jour » ou « auto » selon la lumière), objectif propre.
 
 ## Recadrage : `config.js`
 `CROP` : pour chaque caméra, le centre (`x`, `y` de 0 à 1) et le `zoom`, à régler sur place pour que la personne

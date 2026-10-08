@@ -18,7 +18,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 HERE = pathlib.Path(__file__).resolve().parent
 CFG = json.loads((HERE / "cameras.json").read_text(encoding="utf-8"))
 CAMS = CFG["cameras"]
-TIMEOUT = CFG.get("timeout_s", 6)
+TIMEOUT = CFG.get("timeout_s", 8)
 
 
 def rtsp_url(cam):
@@ -31,15 +31,21 @@ def rtsp_url(cam):
 
 
 def grab_rtsp(cam):
-    """Une image JPEG du flux RTSP via ffmpeg."""
-    cmd = ["ffmpeg", "-nostdin", "-loglevel", "error", "-rtsp_transport", "tcp", "-i", rtsp_url(cam),
-           "-frames:v", "1", "-q:v", "2", "-f", "image2", "-vcodec", "mjpeg", "pipe:1"]
+    """Une image JPEG du flux RTSP via ffmpeg.
+
+    select=I : garde la première image clé (complète), jamais une image baveuse prise entre deux.
+    -q:v 1 : JPEG qualité max, à la pleine résolution du flux (stream1 = 2304×1296 sur C110).
+    """
+    url = rtsp_url(cam)
+    cmd = ["ffmpeg", "-nostdin", "-loglevel", "error", "-rtsp_transport", "tcp", "-analyzeduration", "0",
+           "-i", url, "-vf", r"select=eq(pict_type\,I)", "-frames:v", "1", "-q:v", "1",
+           "-f", "image2", "-vcodec", "mjpeg", "pipe:1"]
     try:
         r = subprocess.run(cmd, capture_output=True, timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"pas d'image après {TIMEOUT} s") from None
     if r.returncode or not r.stdout:
-        err = r.stderr.decode(errors="replace").replace(cmd[7], cam["url"])   # masque le mot de passe
+        err = r.stderr.decode(errors="replace").replace(url, cam["url"])   # masque le mot de passe
         raise RuntimeError(err.strip().splitlines()[-1] if err.strip() else "ffmpeg sans image")
     return r.stdout, "image/jpeg"
 
