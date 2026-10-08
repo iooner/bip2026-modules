@@ -24,9 +24,10 @@ window.CONFIG = {
   ],
   DEMO: true,             // caméra injoignable : image de test au lieu d'une erreur (false en expo)
 
+  SHOT_DELAY_MS: 1500,    // attente entre la fin du décompte et la capture : augmenter si la photo est prise trop tôt, 0 si trop tard
   COUNTDOWN_S: 3,         // compte à rebours avant la prise de vue
   PRINT: true,            // lance l'impression
   IDLE_TIMEOUT_S: 60,     // retour à l'accueil si personne ne touche l'écran
   RESULT_SCREEN_S: 30,    // durée de l'écran final avant retour à l'accueil
-  HIDE_CURSOR: false,     // true sur la borne tactile
+  HIDE_CURSOR: true,      // true sur la borne tactile
 };

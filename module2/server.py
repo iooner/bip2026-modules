@@ -76,7 +76,8 @@ class Live(threading.Thread):
         self.cond = threading.Condition()
 
     def cmd(self):
-        c = ["ffmpeg", "-nostdin", "-loglevel", "error", "-rtsp_transport", "tcp"]
+        c = ["ffmpeg", "-nostdin", "-loglevel", "error", "-rtsp_transport", "tcp",
+             "-fflags", "nobuffer", "-flags", "low_delay"]   # moins de retard entre la scène et l'image reçue
         if DECODE == "key":
             c += ["-skip_frame", "nokey"]
         c += ["-i", self.url]

@@ -1,0 +1,48 @@
+*PPD-Adobe: "4.3"
+*FormatVersion: "4.3"
+*FileVersion: "1.0"
+*LanguageVersion: English
+*LanguageEncoding: ISOLatin1
+*PCFileName: "TSPLBIP.PPD"
+*Manufacturer: "Generic"
+*Product: "(TSPL Label)"
+*ModelName: "TSPL Label Printer BIP2026"
+*ShortNickName: "TSPL Label BIP2026"
+*NickName: "TSPL Label Printer BIP2026 (LW650XL PRO)"
+*PSVersion: "(3010.000) 0"
+*LanguageLevel: "3"
+*ColorDevice: False
+*DefaultColorSpace: Gray
+*FileSystem: False
+*Throughput: "1"
+*LandscapeOrientation: Plus90
+*TTRasterizer: Type42
+*cupsVersion: 1.4
+*cupsModelNumber: 0
+*cupsManualCopies: False
+*cupsFilter: "application/vnd.cups-raster 50 rastertotspl-bip"
+
+*OpenUI *PageSize/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageSize
+*DefaultPageSize: w167h289
+*PageSize w167h289/59 x 102 mm: "<</PageSize[167 289]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageSize
+*OpenUI *PageRegion/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageRegion
+*DefaultPageRegion: w167h289
+*PageRegion w167h289/59 x 102 mm: "<</PageSize[167 289]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageRegion
+*DefaultImageableArea: w167h289
+*ImageableArea w167h289/59 x 102 mm: "0 0 167 289"
+*DefaultPaperDimension: w167h289
+*PaperDimension w167h289/59 x 102 mm: "167 289"
+
+*OpenUI *Resolution/Resolution: PickOne
+*OrderDependency: 20 AnySetup *Resolution
+*DefaultResolution: 300dpi
+*Resolution 203dpi/203 DPI: "<</HWResolution[203 203]/cupsBitsPerColor 8/cupsColorSpace 3/cupsColorOrder 0>>setpagedevice"
+*Resolution 300dpi/300 DPI: "<</HWResolution[300 300]/cupsBitsPerColor 8/cupsColorSpace 3/cupsColorOrder 0>>setpagedevice"
+*CloseUI: *Resolution
+
+*DefaultFont: Courier
+*Font Courier: Standard "(1.05)" Standard ROM

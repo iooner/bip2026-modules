@@ -65,7 +65,12 @@
     show("shoot"); poke();
   }));
   $(".restart").addEventListener("click", reset);
-  $(".again").addEventListener("click", reset);
+  // « Recommencer » : retour à la prise de vue dans la même langue (l'accueil revient après inactivité)
+  $(".again").addEventListener("click", () => {
+    clearTimeout(resultTimer);
+    busy = false; $("#shoot").classList.remove("counting", "flashing");
+    show("shoot"); poke();
+  });
 
   // --- Prise de vue ---
   $(".take").addEventListener("click", async () => {
@@ -80,6 +85,8 @@
     }
     cd.textContent = "";
     shoot.classList.add("flashing");
+    // Le flux des caméras arrive avec un léger retard : on attend qu'il rattrape l'instant du flash
+    if (C.SHOT_DELAY_MS > 0) await wait(C.SHOT_DELAY_MS);
     const shots = await grabAll();
     shoot.classList.remove("flashing", "counting");
     if (!busy) return;
@@ -133,6 +140,7 @@
     ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
+  let lastCam = -1;
   function compose(shots) {
     const ok = shots.flatMap((s, i) => s ? [i] : []);
     if (!ok.length) return null;
@@ -143,7 +151,9 @@
       const gap = px(1), w = (c.width - gap) / 2, h = (c.height - gap) / 2;
       shots.forEach((s, i) => s && drawCrop(ctx, s, C.CROP[i], (i % 2) * (w + gap), Math.floor(i / 2) * (h + gap), w, h));
     } else {
-      const i = ok[Math.floor(Math.random() * ok.length)];
+      // Tirage au hasard, jamais deux fois de suite la même caméra
+      const pool = ok.length > 1 ? ok.filter(k => k !== lastCam) : ok;
+      const i = lastCam = pool[Math.floor(Math.random() * pool.length)];
       console.log("Caméra tirée :", i + 1);
       drawCrop(ctx, shots[i], C.CROP[i], 0, 0, c.width, c.height);
     }

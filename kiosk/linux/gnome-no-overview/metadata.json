@@ -1,0 +1,6 @@
+{
+  "uuid": "no-overview@bip2026",
+  "name": "BIP2026 : pas de vue d'ensemble au démarrage",
+  "description": "Ouvre la session directement sur le bureau (pas de vue Activités ni de dock), pour le kiosk.",
+  "shell-version": ["46", "47", "48", "49"]
+}

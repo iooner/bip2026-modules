@@ -7,3 +7,4 @@
 
 # Identifiants des caméras (module2)
 cameras.secret.json
+__pycache__/
