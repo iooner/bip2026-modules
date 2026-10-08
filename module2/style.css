@@ -52,6 +52,10 @@ em { font-style: italic; }
 #welcome .dates { position: absolute; left: 48px; bottom: 38px; font-size: 18px; text-transform: uppercase; }
 #welcome .credit { position: absolute; left: 48px; bottom: 14px; font-size: 15px; letter-spacing: .02em; opacity: .75; }
 #welcome .credit span { color: var(--mauve); font-size: 1.7em; line-height: 0; vertical-align: -0.14em; }
+#welcome .cams { position: absolute; left: 48px; top: 26px; display: flex; gap: 10px; }
+#welcome .cams i { width: 14px; height: 14px; border-radius: 50%; background: var(--grey); box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
+#welcome .cams i.ok { background: #2fa84f; }
+#welcome .cams i.down { background: #d92b2b; }
 
 #welcome h1.big { font-size: 96px; letter-spacing: -.02em; }
 

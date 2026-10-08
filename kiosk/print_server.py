@@ -153,6 +153,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")   # pages en file:// ou sur un autre port local
         self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(text.encode())
 
