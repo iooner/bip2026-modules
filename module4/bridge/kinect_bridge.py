@@ -14,7 +14,7 @@ Sources :
 
 Usage : python3 kinect_bridge.py --source freenect [--near 1.2 --far 3.5] [--port 8765]
 """
-import argparse, asyncio, json, math, time
+import argparse, asyncio, json, math, os, time
 
 import numpy as np
 import websockets
@@ -282,6 +282,7 @@ async def main(a):
     src = SOURCES[a.source](a)
     clients = set()
     smooth = {}
+    started = False                                         # la 1re lecture peut apprendre le décor (plus longue)
 
     async def handler(ws, *_):
         clients.add(ws)
@@ -304,7 +305,14 @@ async def main(a):
         print(f"Pont {a.source} sur ws://{a.host}:{a.port}")
         while True:
             t = time.time()
-            bodies = await asyncio.to_thread(src.read)
+            try:
+                bodies = await asyncio.wait_for(asyncio.to_thread(src.read), 5 if started else 20)
+            except Exception as e:
+                # Capteur débranché : la lecture reste bloquée (ou échoue). On s'arrête net ; start.sh relance le
+                # pont toutes les 3 s jusqu'au retour du capteur, et la page affiche le bandeau « en panne ».
+                print("Capteur muet, arrêt du pont :", type(e).__name__, e, flush=True)
+                os._exit(1)
+            started = True
             # Lissage exponentiel des articulations (le capteur tremble)
             for b in bodies:
                 for k in b.get("rest", ()):

@@ -19,12 +19,16 @@
   T.sourceName = () => (performance.now() - bridgeAt < 600 ? "kinect" : C.SIMULATION);
 
   // --- Pont Kinect ---
-  let sock = null, downTimer = 0;
-  // Pont absent depuis 15 s : bandeau « en panne » sur l'accueil (sauf si CONFIG.REQUIRE_KINECT est false)
-  function kinectDown() {
-    if (C.REQUIRE_KINECT === false || downTimer) return;
-    downTimer = setTimeout(() => window.KioskStatus && KioskStatus.report("kinect", "pont Kinect injoignable (" + C.BRIDGE_URL + ") : Kinect débranchée ou pont arrêté"), 15000);
-  }
+  let sock = null;
+  // Aucune image du pont depuis 15 s (Kinect débranchée, pont arrêté ou figé) : bandeau « en panne » sur l'accueil.
+  // Le pont envoie une image ~30 fois par seconde même sans personne. CONFIG.REQUIRE_KINECT: false pour s'en passer.
+  const loaded = performance.now();
+  if (C.BRIDGE_URL && C.REQUIRE_KINECT !== false) setInterval(() => {
+    if (!window.KioskStatus) return;
+    if (performance.now() - (bridgeAt || loaded) > 15000)
+      KioskStatus.report("kinect", "aucune image de la Kinect depuis 15 s (" + C.BRIDGE_URL + ") : Kinect débranchée ou pont arrêté");
+    else if (bridgeAt) KioskStatus.clear("kinect");
+  }, 2000);
   function connect() {
     let ws;
     try { ws = new WebSocket(C.BRIDGE_URL); } catch { return setTimeout(connect, 2000); }
@@ -35,10 +39,10 @@
         bridgeAt = performance.now(); T.bridge = true;
       } catch {}
     };
-    ws.onopen = () => { sock = ws; clearTimeout(downTimer); downTimer = 0; window.KioskStatus && KioskStatus.clear("kinect"); };
-    ws.onclose = () => { sock = null; kinectDown(); setTimeout(connect, 2000); };
+    ws.onopen = () => { sock = ws; };
+    ws.onclose = () => { sock = null; setTimeout(connect, 2000); };
   }
-  if (C.BRIDGE_URL) { connect(); kinectDown(); }
+  if (C.BRIDGE_URL) connect();
   // Demande au pont de réapprendre le décor vide dans `delay` secondes. Faux si le pont est absent.
   // Fin d'une session : le pont peut en garder la trace (option --keep-sessions, pour diagnostic).
   T.sessionEnd = () => { if (sock) sock.send(JSON.stringify({ cmd: "session" })); };

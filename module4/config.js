@@ -8,7 +8,7 @@ window.CONFIG = {
 
   // Pont Kinect (bridge/kinect_bridge.py) : squelette envoyé en WebSocket.
   BRIDGE_URL: "ws://localhost:8765",
-  REQUIRE_KINECT: true,     // pont absent 15 s = bandeau « en panne » sur l'accueil (false pour travailler sans Kinect)
+  REQUIRE_KINECT: true,     // aucune image du pont pendant 15 s = bandeau « en panne » sur l'accueil (false pour travailler sans Kinect)
   // Si le pont ne répond pas : "mouse" (souris / doigt = main droite),
   // "demo" (danseur virtuel), "webcam" (détection de pose, internet requis), "none".
   SIMULATION: "mouse",
