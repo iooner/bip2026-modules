@@ -122,8 +122,13 @@
 
   if (!SIM) {
     const es = new EventSource(C.HELPER_URL + "/events");
-    es.addEventListener("open", () => { $("#offline").hidden = true; });
-    es.addEventListener("error", () => { $("#offline").hidden = false; });
+    let downTimer = 0;
+    es.addEventListener("open", () => { $("#offline").hidden = true; clearTimeout(downTimer); downTimer = 0; KioskStatus.clear("scanner"); });
+    es.addEventListener("error", () => {
+      $("#offline").hidden = false;
+      // Toujours absent après 15 s : bandeau « en panne » sur l'accueil
+      downTimer = downTimer || setTimeout(() => KioskStatus.report("scanner", "helper du scanner injoignable (" + C.HELPER_URL + ") : capteur et caméra hors service"), 15000);
+    });
     es.addEventListener("trigger", onTrigger);
     es.addEventListener("photo", e => onPhoto(C.HELPER_URL + JSON.parse(e.data).url));
     es.addEventListener("failed", e => { console.warn("Capture :", e.data); onPhoto(null); });

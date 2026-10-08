@@ -180,6 +180,11 @@
 
   async function finish(shots) {
     const t = UI[lang], url = compose(shots);
+    if (url) KioskStatus.clear("cameras");
+    else {
+      KioskStatus.report("cameras", "aucune des " + shots.length + " caméras n'a répondu (réseau, alimentation, cameras.json ?)");
+      setTimeout(() => KioskStatus.clear("cameras"), 60000);   // nouvel essai possible après une minute
+    }
     $("#result .title").textContent = t.title;
     $("#result .done").textContent = t.done;
     const photo = $("#result .photo"), lphoto = $(".l-photo");

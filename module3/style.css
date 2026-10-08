@@ -140,3 +140,18 @@ em { font-style: italic; }
   #stage, #offline { display: none; }
   #label { position: static; }
 }
+
+/* Bandeau « en panne » (status.js) : accueil grisé, bandeau en travers, détail technique en petit */
+#outage { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+  background: rgba(120,120,120,.45); -webkit-backdrop-filter: grayscale(1) blur(1px); backdrop-filter: grayscale(1) blur(1px);
+  font-family: var(--font, Helvetica, Arial, sans-serif); overflow: hidden; }
+#outage[hidden] { display: none; }
+#outage .band { width: 140%; flex: none; padding: 34px 22%; transform: rotate(-7deg); text-align: center;
+  background: #231f40; color: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+#outage .band p { margin: 0; font-size: 24px; line-height: 1.3; }
+#outage .band .big { font-size: 46px; font-weight: 500; color: #deb6b4; margin-bottom: 10px; }
+#outage .band .en { margin-top: 12px; font-size: 20px; font-style: italic; opacity: .8; }
+#outage .why { position: absolute; left: 12px; right: 12px; bottom: 8px; margin: 0; font: 12px/1.3 monospace;
+  color: #231f40; background: rgba(255,255,255,.75); padding: 3px 6px; text-align: left; }
+#outage .why:empty { display: none; }
+@media print { #outage { display: none; } }

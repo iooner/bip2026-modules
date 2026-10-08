@@ -19,7 +19,12 @@
   T.sourceName = () => (performance.now() - bridgeAt < 600 ? "kinect" : C.SIMULATION);
 
   // --- Pont Kinect ---
-  let sock = null;
+  let sock = null, downTimer = 0;
+  // Pont absent depuis 15 s : bandeau « en panne » sur l'accueil (sauf si CONFIG.REQUIRE_KINECT est false)
+  function kinectDown() {
+    if (C.REQUIRE_KINECT === false || downTimer) return;
+    downTimer = setTimeout(() => window.KioskStatus && KioskStatus.report("kinect", "pont Kinect injoignable (" + C.BRIDGE_URL + ") : Kinect débranchée ou pont arrêté"), 15000);
+  }
   function connect() {
     let ws;
     try { ws = new WebSocket(C.BRIDGE_URL); } catch { return setTimeout(connect, 2000); }
@@ -30,10 +35,10 @@
         bridgeAt = performance.now(); T.bridge = true;
       } catch {}
     };
-    ws.onopen = () => { sock = ws; };
-    ws.onclose = () => { sock = null; setTimeout(connect, 2000); };
+    ws.onopen = () => { sock = ws; clearTimeout(downTimer); downTimer = 0; window.KioskStatus && KioskStatus.clear("kinect"); };
+    ws.onclose = () => { sock = null; kinectDown(); setTimeout(connect, 2000); };
   }
-  if (C.BRIDGE_URL) connect();
+  if (C.BRIDGE_URL) { connect(); kinectDown(); }
   // Demande au pont de réapprendre le décor vide dans `delay` secondes. Faux si le pont est absent.
   // Fin d'une session : le pont peut en garder la trace (option --keep-sessions, pour diagnostic).
   T.sessionEnd = () => { if (sock) sock.send(JSON.stringify({ cmd: "session" })); };
