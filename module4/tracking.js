@@ -19,6 +19,7 @@
   T.sourceName = () => (performance.now() - bridgeAt < 600 ? "kinect" : C.SIMULATION);
 
   // --- Pont Kinect ---
+  let sock = null;
   function connect() {
     let ws;
     try { ws = new WebSocket(C.BRIDGE_URL); } catch { return setTimeout(connect, 2000); }
@@ -29,9 +30,14 @@
         bridgeAt = performance.now(); T.bridge = true;
       } catch {}
     };
-    ws.onclose = () => setTimeout(connect, 2000);
+    ws.onopen = () => { sock = ws; };
+    ws.onclose = () => { sock = null; setTimeout(connect, 2000); };
   }
   if (C.BRIDGE_URL) connect();
+  // Demande au pont de réapprendre le décor vide dans `delay` secondes. Faux si le pont est absent.
+  // Fin d'une session : le pont peut en garder la trace (option --keep-sessions, pour diagnostic).
+  T.sessionEnd = () => { if (sock) sock.send(JSON.stringify({ cmd: "session" })); };
+  T.learn = delay => { if (!sock) return false; sock.send(JSON.stringify({ cmd: "learn", delay })); return true; };
 
   // Silhouette par défaut, debout bras écartés.
   function pose(handL, handR, sway = 0) {

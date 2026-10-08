@@ -4,11 +4,11 @@
     fr: { count: (i, n) => `Question ${i} / ${n}`, title: "Ton portrait",
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Note ton portrait dans ton passeport !",
-          again: "Recommencer", label: "Le vrai test psychométrique" },
+          again: "Recommencer", done: "Terminé", label: "Le vrai test psychométrique" },
     en: { count: (i, n) => `Question ${i} / ${n}`, title: "Your portrait",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "Keep your portrait in mind!",
-          again: "Start again", label: "The Real Psychometric Test" },
+          again: "Start again", done: "Done", label: "The Real Psychometric Test" },
   };
   const $ = (s, el = document) => el.querySelector(s);
   const stage = $("#stage");
@@ -29,6 +29,29 @@
   pageStyle.textContent = `@page { size: ${W}mm ${H}mm; margin: 0; }
     #label { width: ${W}mm; height: ${H}mm; padding: ${M}mm; }`;
   document.head.appendChild(pageStyle);
+
+  // Impression silencieuse : l'étiquette est envoyée au service local du kiosk (kiosk/print_server.py), qui
+  // l'imprime sans rien afficher. Service absent (Windows, essai sur un PC) : impression du navigateur.
+  async function printLabel() {
+    try {
+      const el = document.querySelector("#label"), copy = el.cloneNode(true), from = el.querySelectorAll("canvas, img");
+      copy.querySelectorAll("canvas, img").forEach((n, i) => {       // un canvas copié est vide : on le fige en image
+        let c = from[i];
+        if (c.tagName !== "CANVAS") {
+          if (!c.src.startsWith("blob:")) return;
+          const im = c; c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight;
+          c.getContext("2d").drawImage(im, 0, 0);
+        }
+        const img = document.createElement("img");
+        img.className = n.className; img.id = n.id; img.style.cssText = n.style.cssText; img.src = c.toDataURL("image/png");
+        n.replaceWith(img);
+      });
+      const html = `<!doctype html><html><head><meta charset="utf-8"><base href="${location.href}">` +
+        `<link rel="stylesheet" href="style.css"><style>${pageStyle.textContent}</style></head><body>${copy.outerHTML}</body></html>`;
+      const r = await fetch("http://127.0.0.1:8361/print", { method: "POST", body: html });
+      if (!r.ok) throw new Error(await r.text());
+    } catch (e) { window.print(); }
+  }
 
   function show(id) {
     document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
@@ -54,7 +77,7 @@
     renderQuestion(); show("question"); poke();
   }));
   $(".restart").addEventListener("click", reset);
-  $(".again").addEventListener("click", reset);
+  $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue
 
   // --- Questions ---
   function renderQuestion() {
@@ -120,7 +143,7 @@
     const r = compose(), t = UI[lang];
     console.log("Résultat", r.keys.join(", "));
     $("#result .title").textContent = t.title;
-    $("#result .again").textContent = t.again;
+    $("#result .done").textContent = t.done;
     $("#result .printing").textContent = C.PRINT ? t.printing : t.noprint;
     fillText($("#result .text"), r);
     $(".l-title").textContent = t.label;
@@ -129,7 +152,7 @@
     requestAnimationFrame(() => {
       shrinkToFit($("#result .text"), $("#result .textbox"), 26, 14);
       shrinkToFit($(".l-text"), $(".l-body"), 16, 6);   // 16px ≈ 12pt
-      if (C.PRINT) setTimeout(() => window.print(), 400);
+      if (C.PRINT) setTimeout(printLabel, 400);
     });
     clearTimeout(idleTimer);
     resultTimer = setTimeout(reset, C.RESULT_SCREEN_S * 1000);

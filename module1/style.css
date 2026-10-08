@@ -49,7 +49,9 @@ em { font-style: italic; }
 .lang { height: 104px; background: var(--navy); color: #fff; font-size: 34px; font-weight: 500;
   transition: transform .1s, background .1s; }
 .lang:active { transform: scale(.97); background: var(--mauve); }
-#welcome .dates { position: absolute; left: 48px; bottom: 30px; font-size: 18px; text-transform: uppercase; }
+#welcome .dates { position: absolute; left: 48px; bottom: 38px; font-size: 18px; text-transform: uppercase; }
+#welcome .credit { position: absolute; left: 48px; bottom: 14px; font-size: 15px; letter-spacing: .02em; opacity: .75; }
+#welcome .credit span { color: var(--mauve); font-size: 1.7em; line-height: 0; vertical-align: -0.14em; }
 
 /* Questions */
 #question { background: linear-gradient(to bottom, var(--mauve), var(--pink)); color: var(--navy);
@@ -77,8 +79,8 @@ em { font-style: italic; }
 #result .text .artwork { font-style: italic; color: var(--pink); }
 #result footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 #result .printing { font-size: 20px; color: var(--grey); max-width: 600px; }
-.again { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
-.again:active { background: var(--mauve); color: #fff; }
+.done { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
+.done:active { background: var(--mauve); color: #fff; }
 
 /* Étiquette : rendue hors écran pour mesurer et ajuster le texte, imprimée seule */
 #label { position: fixed; left: -10000px; top: 0; background: #fff; color: #000;
@@ -86,7 +88,8 @@ em { font-style: italic; }
 #label .l-head { display: flex; align-items: center; gap: 2mm; border-bottom: .3mm solid #000;
   padding-bottom: 1.5mm; margin-bottom: 2mm; font-size: 6.5pt; line-height: 1.2; text-transform: uppercase; }
 #label .l-head img { height: 11mm; }
-#label .l-head div { flex: 1; }
+#label .l-head div { flex: 1; min-width: 0; }
+#label .l-credit { white-space: nowrap; font-size: 5.6pt; text-transform: none; }
 #label .l-title { font-weight: 500; }
 #label .l-x { display: inline-flex; align-items: center; justify-content: center; width: 5mm; height: 5mm;
   border: .4mm solid #000; font-size: 8pt; font-weight: 500; }

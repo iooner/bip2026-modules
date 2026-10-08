@@ -12,6 +12,10 @@ PROFILE="$HOME/.cache/bip2026-kiosk-$MODULE"
 RELAUNCH_S=15   # délai avant relance du navigateur s'il est fermé (Alt+F4) : le temps de reprendre la main
 BROWSER="$(command -v chromium || command -v chromium-browser || command -v google-chrome)"
 
+# Impression silencieuse des étiquettes (pas d'aperçu à l'écran) : service commun aux 4 modules
+( while true; do python3 "$ROOT/kiosk/print_server.py"; sleep 2; done ) &
+trap 'kill 0' EXIT
+
 # Module avec serveur local (ex. module2 : relais des caméras IP) : lancé et relancé en tâche de fond
 if [ -f "$ROOT/$MODULE/server.py" ]; then
   PORT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("port", 8360))' "$ROOT/$MODULE/cameras.json")"

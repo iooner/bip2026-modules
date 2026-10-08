@@ -8,7 +8,7 @@
 @font-face { font-family: "HNLT"; font-weight: 500; font-style: italic;
   src: local("HelveticaNeueLTStd-MdIt"), url("fonts/HelveticaNeueLTStd-MdIt.otf"); }
 
-:root {
+:root { --ok: #5fe08a;
   --pink: #deb6b4; --mauve: #98758b; --navy: #231f40; --grey: #a8a7a7;
   --font: "HNLT", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -31,7 +31,15 @@ em { font-style: italic; }
 
 /* Accueil */
 #welcome { background: var(--pink); }
-#welcome .lettering { position: absolute; left: 36px; top: 70px; height: 590px; }
+#welcome .lettering { position: absolute; left: 36px; top: 70px; height: 590px; transform-origin: 50% 60%;
+  animation: sway 7s ease-in-out infinite alternate; will-change: transform; }
+/* Balancement très léger du lettrage, sans effet sur les performances (transform seul), comme le module 1 */
+@keyframes sway {
+  0%   { transform: rotate(-1.2deg) translate(0, 0); }
+  50%  { transform: rotate(0.4deg) translate(4px, -6px); }
+  100% { transform: rotate(1.2deg) translate(-3px, 2px); }
+}
+@media (prefers-reduced-motion: reduce) { #welcome .lettering { animation: none; } }
 #welcome .side { position: absolute; right: 48px; top: 48px; bottom: 48px; width: 320px;
   display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
 #welcome .biennale { margin-top: 28px; font-size: 22px; line-height: 1.1; text-transform: uppercase; }
@@ -41,7 +49,9 @@ em { font-style: italic; }
 .lang { height: 104px; background: var(--navy); color: #fff; font-size: 34px; font-weight: 500;
   transition: transform .1s, background .1s; }
 .lang:active { transform: scale(.97); background: var(--mauve); }
-#welcome .dates { position: absolute; left: 48px; bottom: 30px; font-size: 18px; text-transform: uppercase; }
+#welcome .dates { position: absolute; left: 48px; bottom: 38px; font-size: 18px; text-transform: uppercase; }
+#welcome .credit { position: absolute; left: 48px; bottom: 14px; font-size: 15px; letter-spacing: .02em; opacity: .75; }
+#welcome .credit span { color: var(--mauve); font-size: 1.7em; line-height: 0; vertical-align: -0.14em; }
 
 /* Placement sur la croix */
 #place { background: linear-gradient(to bottom, var(--mauve), var(--pink)); color: #fff;
@@ -55,6 +65,11 @@ em { font-style: italic; }
 #place .live { position: absolute; inset: 0; }
 #place .floorx { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%) scaleY(.45);
   font-size: 90px; line-height: 1; color: var(--pink); opacity: .8; }
+#place .pos { position: absolute; left: 0; right: 0; top: 0; padding: 12px 16px; text-align: center; font-size: 19px;
+  font-weight: 500; text-transform: uppercase; letter-spacing: .03em; color: var(--pink); background: rgba(255,255,255,.08); }
+#place .mirror.ok .pos { color: var(--navy); background: var(--ok); }
+#place .mirror.ok .hold i { background: var(--ok); }
+#place .mirror.ok { outline: 4px solid var(--ok); }
 #place .hold { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; }
 #place .hold i, #record .bar i { display: block; height: 100%; width: 0; background: var(--pink); }
 #place footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
@@ -74,12 +89,17 @@ em { font-style: italic; }
 #result { background: var(--navy); color: #fff; padding: 48px 64px; display: flex; flex-direction: column; }
 #result .lettering.small { position: absolute; right: 48px; top: 36px; height: 150px; opacity: .9; }
 #result .title { font-size: 26px; font-weight: 500; text-transform: uppercase; letter-spacing: .02em; color: var(--pink); }
-#result .sig { margin: 40px 0 12px; width: 896px; height: 440px; }
+#result .row { margin: 40px 0 12px; display: flex; align-items: center; gap: 16px; }
+#result .sig { width: 584px; height: 440px; }
+#result .replaybox { width: 296px; }
+#result .replay { display: block; width: 296px; height: 222px; border: 2px solid rgba(222,182,180,.5); }
+#result .replaybox figcaption { margin-top: 8px; font-size: 15px; text-transform: uppercase; letter-spacing: .03em; color: var(--grey); }
 #result .meta { font-size: 18px; color: var(--pink); }
 #result footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 #result .printing { font-size: 20px; color: var(--grey); max-width: 600px; }
-.again { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
-.again:active { background: var(--mauve); color: #fff; }
+.actions { display: flex; gap: 16px; flex-shrink: 0; }
+.done { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
+.done:active { background: var(--mauve); color: #fff; }
 
 /* Étiquette : rendue hors écran, imprimée seule */
 #label { position: fixed; left: -10000px; top: 0; background: #fff; color: #000;
@@ -87,7 +107,8 @@ em { font-style: italic; }
 #label .l-head { display: flex; align-items: center; gap: 2mm; border-bottom: .3mm solid #000;
   padding-bottom: 1.5mm; margin-bottom: 2mm; font-size: 6.5pt; line-height: 1.2; text-transform: uppercase; }
 #label .l-head img { height: 11mm; }
-#label .l-head div { flex: 1; }
+#label .l-head div { flex: 1; min-width: 0; }
+#label .l-credit { white-space: nowrap; font-size: 5.6pt; text-transform: none; }
 #label .l-title { font-weight: 500; }
 #label .l-x { display: inline-flex; align-items: center; justify-content: center; width: 5mm; height: 5mm;
   border: .4mm solid #000; font-size: 8pt; font-weight: 500; }
@@ -96,6 +117,10 @@ em { font-style: italic; }
 #label .l-foot { border-top: .3mm solid #000; padding-top: 1.5mm; margin-top: 2mm;
   display: flex; flex-direction: column; gap: .5mm; font-size: 7pt; line-height: 1.2; }
 #label .l-meta { text-transform: uppercase; font-size: 6.5pt; }
+
+#learn { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center;
+  padding: 60px; text-align: center; font-size: 34px; line-height: 1.3; color: #fff; background: rgba(35,31,64,.94); }
+#learn[hidden] { display: none; }
 
 @media print {
   html, body { width: auto; height: auto; overflow: visible; background: #fff; }

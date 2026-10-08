@@ -6,13 +6,13 @@
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Voilà comment le miroir te voit.",
           error: "La photo n’a pas pu être prise. Réessaie dans un instant.",
-          again: "Recommencer", done: "Terminé" },
+          done: "Terminé" },
     en: { hint: "Stand in the middle\nand strike your best pose!",
           take: "Take a photo", title: "Your 360°",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "This is how the mirror sees you.",
           error: "The photo could not be taken. Try again in a moment.",
-          again: "Start again", done: "Done" },
+          done: "Done" },
   };
   const $ = (s, el = document) => el.querySelector(s);
   const stage = $("#stage");
@@ -36,6 +36,29 @@
     #label .l-head { height: ${C.LABEL_HEAD_MM}mm; }
     #label .l-photo { width: ${PW}mm; height: ${PH}mm; filter: ${C.LABEL_FILTER}; }`;
   document.head.appendChild(pageStyle);
+
+  // Impression silencieuse : l'étiquette est envoyée au service local du kiosk (kiosk/print_server.py), qui
+  // l'imprime sans rien afficher. Service absent (Windows, essai sur un PC) : impression du navigateur.
+  async function printLabel() {
+    try {
+      const el = document.querySelector("#label"), copy = el.cloneNode(true), from = el.querySelectorAll("canvas, img");
+      copy.querySelectorAll("canvas, img").forEach((n, i) => {       // un canvas copié est vide : on le fige en image
+        let c = from[i];
+        if (c.tagName !== "CANVAS") {
+          if (!c.src.startsWith("blob:")) return;
+          const im = c; c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight;
+          c.getContext("2d").drawImage(im, 0, 0);
+        }
+        const img = document.createElement("img");
+        img.className = n.className; img.id = n.id; img.style.cssText = n.style.cssText; img.src = c.toDataURL("image/png");
+        n.replaceWith(img);
+      });
+      const html = `<!doctype html><html><head><meta charset="utf-8"><base href="${location.href}">` +
+        `<link rel="stylesheet" href="style.css"><style>${pageStyle.textContent}</style></head><body>${copy.outerHTML}</body></html>`;
+      const r = await fetch("http://127.0.0.1:8361/print", { method: "POST", body: html });
+      if (!r.ok) throw new Error(await r.text());
+    } catch (e) { window.print(); }
+  }
 
   function show(id) {
     document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
@@ -66,12 +89,6 @@
   }));
   $(".restart").addEventListener("click", reset);
   $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue
-  // « Recommencer » : retour à la prise de vue dans la même langue (l'accueil revient après inactivité)
-  $(".again").addEventListener("click", () => {
-    clearTimeout(resultTimer);
-    busy = false; $("#shoot").classList.remove("counting", "flashing");
-    show("shoot"); poke();
-  });
 
   // --- Prise de vue ---
   $(".take").addEventListener("click", async () => {
@@ -164,7 +181,6 @@
   async function finish(shots) {
     const t = UI[lang], url = compose(shots);
     $("#result .title").textContent = t.title;
-    $("#result .again").textContent = t.again;
     $("#result .done").textContent = t.done;
     const photo = $("#result .photo"), lphoto = $(".l-photo");
     photo.hidden = !url;
@@ -174,7 +190,7 @@
       await Promise.all([photo.decode(), lphoto.decode()]).catch(() => {});
     }
     show("result");
-    if (url && C.PRINT) setTimeout(() => window.print(), 400);
+    if (url && C.PRINT) setTimeout(printLabel, 400);
     clearTimeout(idleTimer);
     resultTimer = setTimeout(reset, C.RESULT_SCREEN_S * 1000);
   }
