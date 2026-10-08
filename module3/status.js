@@ -4,13 +4,16 @@
 // Le bandeau n'apparaît que sur l'accueil (on n'interrompt pas un visiteur) et disparaît dès que tout remarche.
 //   KioskStatus.report("code", "détail")   signale un problème propre au module
 //   KioskStatus.clear("code")              le lève
+//   KioskStatus.warn("code", "détail")     souci mineur, sans bandeau : écrit en petit en bas de l'accueil
+//   KioskStatus.unwarn("code")             l'efface
 // L'état de l'impression vient du service du kiosk (kiosk/print_server.py, GET /status).
 // Essai : ajouter ?panne=un+texte à l'adresse de la page.
 (() => {
   const C = window.CONFIG || {};
   const URL_ = C.STATUS_URL === undefined ? "http://127.0.0.1:8361/status" : C.STATUS_URL;
   const local = new Map();          // problèmes signalés par le module
-  let remote = [], seen = false, misses = 0, box;
+  const warns = new Map();          // soucis mineurs (pas de bandeau)
+  let remote = [], seen = false, misses = 0, box, line;
 
   function build() {
     box = document.createElement("div");
@@ -20,6 +23,11 @@
       <p class="en">Oops, short technical break! Please ask a member of the exhibition team to come and fix me.</p></div>
       <p class="why"></p>`;
     document.body.appendChild(box);
+    line = document.createElement("p");
+    line.id = "kiosk-warn"; line.hidden = true;
+    line.style.cssText = "position:fixed;right:12px;bottom:8px;margin:0;z-index:40;font:12px/1.3 monospace;" +
+      "color:#231f40;background:rgba(255,255,255,.75);padding:3px 6px;pointer-events:none";
+    document.body.appendChild(line);
   }
 
   function refresh() {
@@ -28,6 +36,8 @@
     const home = document.querySelector("#welcome.active");
     box.hidden = !(all.length && home);
     box.querySelector(".why").textContent = all.map(p => `${p.code} : ${p.detail}`).join("  |  ");
+    line.textContent = [...warns].map(([code, detail]) => `${code} : ${detail}`).join("  |  ");
+    line.hidden = !(warns.size && home && box.hidden);
   }
 
   async function poll() {
@@ -46,6 +56,8 @@
   window.KioskStatus = {
     report(code, detail) { local.set(code, detail); refresh(); },
     clear(code) { if (local.delete(code)) refresh(); },
+    warn(code, detail) { warns.set(code, detail); refresh(); },
+    unwarn(code) { if (warns.delete(code)) refresh(); },
   };
   addEventListener("DOMContentLoaded", () => {
     build();

@@ -48,6 +48,11 @@ réseau ou caméra débranchée : reconnexion automatique. Réglages optionnels 
 - `"snap_wait_s": 2` : attente max d'une image prise après le clic, sinon la plus récente.
 - `"live": false` : ancien mode, une connexion par photo. `timeout_s` : délai max de ce mode.
 
+### Présence des caméras
+`server.py` sait à tout moment quelles caméras envoient des images (`GET /cameras`, vérifié toutes les 5 s par
+la page). Aucune caméra : bandeau « pause technique » sur l'accueil. Certaines seulement : pas de bandeau (le
+tirage les ignore), leur numéro est écrit en petit en bas à droite de l'accueil.
+
 ### Qualité d'image
 Le serveur garde les images clés de `stream1` en JPEG qualité max. Si l'image reste moyenne, c'est la
 source : app Tapo > ⚙ > **Qualité vidéo** sur la plus haute (2K/3MP), éclairage suffisant (sinon la caméra passe
