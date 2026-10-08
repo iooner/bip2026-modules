@@ -16,7 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 PORT = int(os.environ.get("BIP_PRINT_PORT", 8361))   # autre port : essais sans toucher au service de la borne
 DIR = os.path.expanduser("~/.cache/bip2026/print")
 LOCK = threading.Lock()   # une étiquette à la fois
-STUCK_S = 45              # une étiquette encore en file après ce délai = imprimante bloquée (vide, éteinte, débranchée…)
+STUCK_S = 30              # une étiquette encore en file après ce délai = imprimante bloquée (vide, éteinte, débranchée…)
 LAST = {"error": None, "printer_msg": None}
 SEEN = {}                 # étiquettes en file -> heure où on les a vues pour la première fois
 
@@ -52,9 +52,8 @@ def problems():
     out += printer_problems(name)
     # Pilote d'impression installé différent de celui du dépôt : mise à jour du dépôt faite sans réinstaller le pilote
     repo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "linux", "tspl", "rastertotspl-bip")
-    inst = "/usr/lib/cups/filter/rastertotspl-bip"
     try:
-        if os.path.exists(inst) and open(repo, "rb").read() != open(inst, "rb").read():
+        if os.path.exists(TSPL) and open(repo, "rb").read() != open(TSPL, "rb").read():
             out.append({"code": "pilote", "detail": "pilote d'impression pas à jour : lancer ./kiosk/linux/update.sh "
                                                     f"(ou sudo install -m 755 {repo} /usr/lib/cups/filter/)"})
     except OSError:
@@ -64,8 +63,10 @@ def problems():
     return out
 
 
-PRINTER = {"paper": None, "cap": None, "absent": 0}   # dernier état donné par l'imprimante ; absent = nb de lectures ratées
+PRINTER = {"paper": None, "cap": None, "absent": 0, "seen": False, "mute": 0}   # dernier état donné par l'imprimante ; absent = nb de lectures ratées
 DEV = "/dev/usb/lp0"
+TSPL = "/usr/lib/cups/filter/rastertotspl-bip"        # pilote installé = cette borne a l'imprimante USB interrogeable
+MUTE_N = 4                # lectures sans réponse d'affilée (environ 12 s) avant de la dire muette
 
 
 def ask_printer():
@@ -76,7 +77,8 @@ def ask_printer():
     try:
         fd = os.open(DEV, os.O_RDWR | os.O_NONBLOCK)
     except FileNotFoundError:
-        PRINTER["absent"] += 1                       # débranchée ou éteinte
+        if PRINTER["seen"] or os.path.exists(TSPL):  # débranchée ou éteinte (autre borne sans cette imprimante : rien)
+            PRINTER["absent"] += 1
         return
     except OSError:
         return                                       # occupée (impression en cours)
@@ -84,7 +86,7 @@ def ask_printer():
         text = b""
         for q in (b"SSSGETPAPER\r\n", b"SSSGETCAP\r\n"):
             os.write(fd, q)
-            end = time.time() + 1.5
+            end = time.time() + 1.0
             while time.time() < end and not text.endswith(b"\n"):
                 if select.select([fd], [], [], 0.3)[0]:
                     text += os.read(fd, 256)
@@ -94,7 +96,11 @@ def ask_printer():
             PRINTER["paper"] = said["PAPER"] == "YES"
         if "CAP" in said:
             PRINTER["cap"] = said["CAP"] == "CLOSE"
-        PRINTER["absent"] = 0
+        PRINTER["absent"], PRINTER["seen"] = 0, True
+        # Ouverte mais muette (vu après un rebranchement USB) : son état n'est plus connu, on oublie le dernier
+        PRINTER["mute"] = 0 if said else PRINTER["mute"] + 1
+        if PRINTER["mute"] >= MUTE_N:
+            PRINTER["paper"] = PRINTER["cap"] = None
         msg = " / ".join(text.decode("latin-1").split())
         if msg != LAST["printer_msg"]:
             LAST["printer_msg"] = msg
@@ -106,17 +112,19 @@ def ask_printer():
 
 
 def watch_printer():
-    if not os.path.exists("/dev/usb"):               # pas d'imprimante USB de ce type sur cette borne
-        return
+    # Pas d'abandon si /dev/usb manque au lancement : au démarrage de la borne, le service part souvent avant que
+    # l'imprimante soit reconnue sur l'USB, et son état (rouleau, capot, débranchée) n'était alors jamais lu.
     while True:
         ask_printer()
-        time.sleep(4)
+        time.sleep(1)
 
 
 def printer_problems(name):
     out = []
     if PRINTER["absent"] >= 3:
         out.append({"code": "imprimante", "detail": f"{name} débranchée ou éteinte (USB absent)"})
+    if PRINTER["mute"] >= MUTE_N and os.path.exists(TSPL):
+        out.append({"code": "imprimante", "detail": f"{name} ne répond pas (l'éteindre puis la rallumer)"})
     if PRINTER["paper"] is False:
         out.append({"code": "etiquettes", "detail": f"{name} : plus d'étiquettes (rouleau vide ou mal engagé)"})
     if PRINTER["cap"] is False:
