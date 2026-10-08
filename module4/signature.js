@@ -2,18 +2,23 @@
 // d'encre, épais quand le geste est lent, fin quand il est rapide (comme une plume).
 (() => {
   // Membres qui signent et épaisseur relative de leur trait.
-  const INK = { handR: 1, handL: 1, footL: 0.45, footR: 0.45, head: 0.35 };
+  // (La tête ne signe plus : elle bouge peu et brouillait le dessin. Pour la remettre : head: 0.35.)
+  const INK = { handR: 1, handL: 1, footL: 0.45, footR: 0.45 };
 
   function create() { const tr = {}; for (const k in INK) tr[k] = []; return tr; }
 
   function add(tracks, body, t) {
     if (!body) return;
+    const rest = body.rest || [];
     for (const k in INK) {
-      const p = body.joints[k];
-      if (!p) continue;
-      const a = tracks[k], last = a[a.length - 1];
-      if (last && Math.hypot(p[0] - last[0], p[1] - last[1]) < 0.002) continue;  // immobile
-      a.push([p[0], p[1], t]);
+      const p = body.joints[k], a = tracks[k];
+      // Membre non vu par le capteur (position supposée) : pas d'encre, le trait reprendra ailleurs
+      if (!p || rest.includes(k)) { a.cut = true; continue; }
+      const last = a[a.length - 1], d = last ? Math.hypot(p[0] - last[0], p[1] - last[1]) : 1;
+      if (d < 0.002) continue;  // immobile
+      // Nouveau trait après une coupure ou un saut impossible (le point a changé d'endroit d'un coup)
+      a.push([p[0], p[1], t, a.cut || d > 0.2 ? 1 : 0]);
+      a.cut = false;
     }
   }
 
@@ -52,8 +57,13 @@
       map = p => [ox + (p[0] - b.x0) * k, oy + (p[1] - b.y0) * k];
     }
     ctx.strokeStyle = ctx.fillStyle = color; ctx.lineCap = ctx.lineJoin = "round";
+    const strokes = [];   // chaque membre peut laisser plusieurs traits séparés
     for (const key in INK) {
-      const a = smooth(tracks[key]).map(p => [...map(p), p[2]]);
+      let cur = null;
+      for (const p of tracks[key]) { if (!cur || p[3]) strokes.push(cur = { key, pts: [] }); cur.pts.push(p); }
+    }
+    for (const { key, pts } of strokes) {
+      const a = smooth(pts).map(p => [...map(p), p[2]]);
       if (a.length < 3) continue;
       let prevW = null;
       for (let i = 1; i < a.length - 1; i++) {
@@ -71,14 +81,5 @@
   const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
 
   // Longueur parcourue par les mains, en « largeurs d'image » (pour le texte de l'étiquette).
-  function handTravel(tracks) {
-    let d = 0;
-    for (const k of ["handL", "handR"]) {
-      const a = tracks[k];
-      for (let i = 1; i < a.length; i++) d += Math.hypot(a[i][0] - a[i - 1][0], a[i][1] - a[i - 1][1]);
-    }
-    return d;
-  }
-
-  window.Signature = { create, add, render, handTravel };
+  window.Signature = { create, add, render };
 })();

@@ -22,6 +22,7 @@
       </div>
     </div>
     <p class="dates">17.10 – 13.12 / Liège (BE)</p>
+    <p class="credit">Built with <span>♥</span> by iooner @ Liège Hackerspace for BIP26</p>
   </section>
 
   <section id="place" class="screen">
@@ -33,6 +34,7 @@
     <p class="sub" data-t="placeText"></p>
     <div class="mirror">
       <canvas class="live" width="560" height="420"></canvas>
+      <p class="pos"></p>
       <div class="floorx">✕</div>
       <div class="hold"><i></i></div>
     </div>
@@ -53,25 +55,35 @@
   <section id="result" class="screen">
     <img class="lettering small" src="assets/miroir-blanc.png" alt="">
     <h2 class="title" data-t="resultTitle"></h2>
-    <canvas class="sig" width="896" height="440"></canvas>
+    <div class="row">
+      <canvas class="sig" width="584" height="440"></canvas>
+      <figure class="replaybox">
+        <canvas class="replay" width="296" height="222"></canvas>
+        <figcaption data-t="replay"></figcaption>
+      </figure>
+    </div>
     <p class="meta"></p>
     <footer>
       <p class="printing"></p>
-      <button class="again" data-t="again"></button>
+      <div class="actions">
+        <button class="done" data-t="done"></button>
+      </div>
     </footer>
   </section>
 
 </div>
 
+<div id="learn" hidden></div>
+
 <!-- Étiquette : invisible à l'écran, seule chose imprimée -->
 <div id="label">
   <div class="l-head">
-    <img src="assets/miroir-noir.png" alt="">
-    <div><span class="l-title"></span><br>BIP 2026 · Liège</div>
+    <img src="assets/miroir-noir-gras.png" alt="">
+    <div><span class="l-title"></span><br>BIP 2026 · Liège<br><span class="l-credit">× Liège Hackerspace × iooner</span></div>
     <span class="l-x">✕</span>
   </div>
   <div class="l-body"><img class="l-sig" alt=""></div>
-  <div class="l-foot"><span class="l-line"></span><span class="l-meta"></span></div>
+  <div class="l-foot"><span class="l-meta"></span></div>
 </div>
 
 <script src="config.js"></script>

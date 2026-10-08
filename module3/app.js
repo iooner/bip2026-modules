@@ -11,7 +11,8 @@
           scanning: "Analyse en cours…", stamp: "AUTORISÉ", clear: "Bonne visite !", xray: "RAYONS X", restart: "Recommencer", locale: "fr-BE",
           printing: "Ton étiquette s’imprime : colle-la dans ton passeport. N’oublie pas tes affaires !",
           noprint: "N’oublie pas tes affaires !",
-          label: "Vide ton sac", info: ["Passager", "Date", "Heure", "Porte"] },
+          label: "Vide ton sac", info: ["Passager", "Date", "Heure", "Porte"],
+          agent: ["Agent", "Sarah Sûre"] },
     en: { kicker: "Security check", title: "Empty your bag!",
           steps: ["Empty your pockets or your bag into the tray.",
                   "Slide the tray into the scanner.",
@@ -20,7 +21,8 @@
           scanning: "Scanning…", stamp: "CLEAR", clear: "Enjoy the exhibition!", xray: "X-RAY", restart: "Start again", locale: "en-GB",
           printing: "Your label is printing: stick it in your passport. Don’t forget your belongings!",
           noprint: "Don’t forget your belongings!",
-          label: "Empty your bag", info: ["Passenger", "Date", "Time", "Gate"] },
+          label: "Empty your bag", info: ["Passenger", "Date", "Time", "Gate"],
+          agent: ["Agent", "Justin Case"] },
   };
   const $ = (s, el = document) => el.querySelector(s);
   const stage = $("#stage");
@@ -41,6 +43,29 @@
   pageStyle.textContent = `@page { size: ${W}mm ${H}mm; margin: 0; }
     #label { width: ${W}mm; height: ${H}mm; padding: ${M}mm; }`;
   document.head.appendChild(pageStyle);
+
+  // Impression silencieuse : l'étiquette est envoyée au service local du kiosk (kiosk/print_server.py), qui
+  // l'imprime sans rien afficher. Service absent (Windows, essai sur un PC) : impression du navigateur.
+  async function printLabel() {
+    try {
+      const el = document.querySelector("#label"), copy = el.cloneNode(true), from = el.querySelectorAll("canvas, img");
+      copy.querySelectorAll("canvas, img").forEach((n, i) => {       // un canvas copié est vide : on le fige en image
+        let c = from[i];
+        if (c.tagName !== "CANVAS") {
+          if (!c.src.startsWith("blob:")) return;
+          const im = c; c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight;
+          c.getContext("2d").drawImage(im, 0, 0);
+        }
+        const img = document.createElement("img");
+        img.className = n.className; img.id = n.id; img.style.cssText = n.style.cssText; img.src = c.toDataURL("image/png");
+        n.replaceWith(img);
+      });
+      const html = `<!doctype html><html><head><meta charset="utf-8"><base href="${location.href}">` +
+        `<link rel="stylesheet" href="style.css"><style>${pageStyle.textContent}</style></head><body>${copy.outerHTML}</body></html>`;
+      const r = await fetch("http://127.0.0.1:8361/print", { method: "POST", body: html });
+      if (!r.ok) throw new Error(await r.text());
+    } catch (e) { window.print(); }
+  }
 
   // --- Réglage des filtres (contraste / luminosité / négatif) ---
   function tone(filter, contrast, brightness, invert) {
@@ -112,7 +137,8 @@
     const info = [String(n).padStart(4, "0"),
                   now.toLocaleDateString(t.locale, { day: "2-digit", month: "2-digit", year: "numeric" }),
                   now.toLocaleTimeString(t.locale, { hour: "2-digit", minute: "2-digit" }), "✕"];
-    const dl = t.info.map((k, i) => `<dt>${k}</dt><dd>${info[i]}</dd>`).join("");
+    const dl = t.info.map((k, i) => `<dt>${k}</dt><dd>${info[i]}</dd>`).join("") +
+      `<dt>${t.agent[0]}</dt><dd class="agent">${t.agent[1]}</dd>`;   // l'agent de sûreté (jeu de mots, sans l'expliquer)
     $("#scan .kicker").textContent = t.kicker;
     $("#scan .info").innerHTML = dl;
     $("#scan .meta").textContent = `#${info[0]} · ${info[1]} ${info[2]}`;
@@ -184,7 +210,7 @@
       $("#scan .status span").textContent = t.stamp;
       $("#scan .printing").textContent = C.PRINT ? t.printing : t.noprint;
       chime();
-      if (C.PRINT) setTimeout(() => window.print(), 600);
+      if (C.PRINT) setTimeout(printLabel, 600);
       resultTimer = setTimeout(reset, C.RESULT_SCREEN_S * 1000);
     }, C.SCAN_S * 1000);
   }
