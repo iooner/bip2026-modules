@@ -13,13 +13,14 @@ window.CONFIG = {
   LAYOUT: "random",
   CAMERA_COUNT: 4,
   SNAPSHOT_URL: "snap/",  // servi par server.py : snap/1 … snap/4
-  // Recadrage par caméra : centre (x, y de 0 à 1) et zoom (1 = image entière).
+  // Recadrage par caméra : l'image est toujours coupée au format de la zone photo de l'étiquette,
+  // centrée sur (x, y de 0 à 1). zoom 1 = bande centrale pleine hauteur (848×1296 px sur C110).
   // À régler sur place pour que la personne soit au centre.
   CROP: [
-    { x: 0.5, y: 0.5, zoom: 1.6 },
-    { x: 0.5, y: 0.5, zoom: 1.6 },
-    { x: 0.5, y: 0.5, zoom: 1.6 },
-    { x: 0.5, y: 0.5, zoom: 1.6 },
+    { x: 0.5, y: 0.5, zoom: 1 },
+    { x: 0.5, y: 0.5, zoom: 1 },
+    { x: 0.5, y: 0.5, zoom: 1 },
+    { x: 0.5, y: 0.5, zoom: 1 },
   ],
   DEMO: true,             // caméra injoignable : image de test au lieu d'une erreur (false en expo)
 
