@@ -69,11 +69,9 @@ em { font-style: italic; }
 #result .photo { height: 100%; border: 6px solid #fff; }
 #result footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 #result .printing { font-size: 20px; color: var(--grey); max-width: 460px; }
-.again { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
-.again:active { background: var(--mauve); color: #fff; }
+.again, .done { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
+.again:active, .done:active { background: var(--mauve); color: #fff; }
 #result .actions { display: flex; gap: 16px; flex: none; }
-.done { height: 80px; padding: 0 40px; background: transparent; color: #fff; border: 3px solid #fff; font-size: 24px; font-weight: 500; }
-.done:active { background: #fff; color: var(--navy); }
 
 /* Étiquette : rendue hors écran, imprimée seule */
 #label { position: fixed; left: -10000px; top: 0; background: #fff; color: #000;
