@@ -4,3 +4,6 @@
 *.woff
 *.woff2
 .DS_Store
+
+# Identifiants des caméras (module2)
+cameras.secret.json

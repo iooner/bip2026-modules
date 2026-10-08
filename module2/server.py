@@ -18,6 +18,14 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 HERE = pathlib.Path(__file__).resolve().parent
 CFG = json.loads((HERE / "cameras.json").read_text(encoding="utf-8"))
 CAMS = CFG["cameras"]
+# Identifiants hors dépôt : cameras.secret.json (ignoré par git) = {"user": "…", "password": "…"},
+# appliqués aux caméras dont user est vide dans cameras.json.
+SECRET = HERE / "cameras.secret.json"
+if SECRET.exists():
+    _s = json.loads(SECRET.read_text(encoding="utf-8"))
+    for _c in CAMS:
+        if not _c.get("user"):
+            _c["user"], _c["password"] = _s.get("user", ""), _s.get("password", "")
 TIMEOUT = CFG.get("timeout_s", 8)
 
 

@@ -18,10 +18,13 @@ sur `http://127.0.0.1:8360/`. Il refuse de servir `cameras.json`.
 ## Caméras : `cameras.json`
 Caméras retenues : **Tapo C110**. Elles n'ont pas d'URL snapshot HTTP, seulement un flux RTSP :
 `server.py` en extrait une image avec **ffmpeg** (installé par `setup-pi.sh`). Une caméra vide ou injoignable
-est ignorée. Par caméra :
+est ignorée. Les 4 caméras (IP 192.168.1.172, .9, .180, .131) sont déjà dans `cameras.json`.
+
+**Identifiants : jamais dans git.** Créer à côté, sur la borne, `module2/cameras.secret.json` (ignoré par git) :
 ```json
-{ "url": "rtsp://192.168.1.101:554/stream1", "user": "compte_camera", "password": "…" }
+{ "user": "compte_camera", "password": "…" }
 ```
+Ils s'appliquent à toutes les caméras dont `user` est vide dans `cameras.json`.
 `stream1` = pleine résolution, `stream2` = basse résolution. `user` / `password` = le **compte caméra** créé dans
 l'app Tapo (pas le compte Tapo/TP-Link). Une URL `http://…` (caméra avec snapshot JPEG) marche aussi.
 Prévoir une IP fixe par caméra (réservation DHCP dans la box/le routeur).
