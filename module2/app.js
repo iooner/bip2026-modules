@@ -6,13 +6,13 @@
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Voilà comment le miroir te voit.",
           error: "La photo n’a pas pu être prise. Réessaie dans un instant.",
-          again: "Recommencer" },
+          again: "Recommencer", done: "Terminé" },
     en: { hint: "Stand in the middle\nand strike your best pose!",
           take: "Take a photo", title: "Your 360°",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "This is how the mirror sees you.",
           error: "The photo could not be taken. Try again in a moment.",
-          again: "Start again" },
+          again: "Start again", done: "Done" },
   };
   const $ = (s, el = document) => el.querySelector(s);
   const stage = $("#stage");
@@ -65,6 +65,7 @@
     show("shoot"); poke();
   }));
   $(".restart").addEventListener("click", reset);
+  $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue
   // « Recommencer » : retour à la prise de vue dans la même langue (l'accueil revient après inactivité)
   $(".again").addEventListener("click", () => {
     clearTimeout(resultTimer);
@@ -164,6 +165,7 @@
     const t = UI[lang], url = compose(shots);
     $("#result .title").textContent = t.title;
     $("#result .again").textContent = t.again;
+    $("#result .done").textContent = t.done;
     const photo = $("#result .photo"), lphoto = $(".l-photo");
     photo.hidden = !url;
     $("#result .printing").textContent = !url ? t.error : C.PRINT ? t.printing : t.noprint;
