@@ -68,16 +68,17 @@ em { font-style: italic; }
 #result .photobox { flex: 1; margin: 16px 0 24px; display: flex; justify-content: center; min-height: 0; }
 #result .photo { height: 100%; border: 6px solid #fff; }
 #result footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-#result .printing { font-size: 20px; color: var(--grey); max-width: 600px; }
-.again { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
-.again:active { background: var(--mauve); color: #fff; }
+#result .printing { font-size: 20px; color: var(--grey); max-width: 460px; }
+.again, .done { height: 80px; padding: 0 40px; background: var(--pink); color: var(--navy); font-size: 24px; font-weight: 500; }
+.again:active, .done:active { background: var(--mauve); color: #fff; }
+#result .actions { display: flex; gap: 16px; flex: none; }
 
 /* Étiquette : rendue hors écran, imprimée seule */
 #label { position: fixed; left: -10000px; top: 0; background: #fff; color: #000;
   display: flex; flex-direction: column; overflow: hidden; font-family: var(--font); }
 #label .l-head { flex: none; display: flex; align-items: center; gap: 2mm; border-bottom: .3mm solid #000;
   padding-bottom: 1.5mm; margin-bottom: 0; font-size: 6.5pt; line-height: 1.2; text-transform: uppercase; }
-#label .l-head img { height: 11mm; }
+#label .l-head img { height: 11mm; filter: drop-shadow(0 0 .12mm #000) drop-shadow(0 0 .12mm #000); }
 #label .l-head div { flex: 1; }
 #label .l-title { font-weight: 500; font-size: 9pt; }
 #label .l-x { display: inline-flex; align-items: center; justify-content: center; width: 5mm; height: 5mm;

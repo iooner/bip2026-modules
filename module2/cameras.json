@@ -1,10 +1,10 @@
 {
   "port": 8360,
-  "timeout_s": 4,
+  "timeout_s": 8,
   "cameras": [
-    { "url": "", "user": "", "password": "" },
-    { "url": "", "user": "", "password": "" },
-    { "url": "", "user": "", "password": "" },
-    { "url": "", "user": "", "password": "" }
+    { "url": "rtsp://192.168.1.172:554/stream1", "user": "", "password": "" },
+    { "url": "rtsp://192.168.1.9:554/stream1", "user": "", "password": "" },
+    { "url": "rtsp://192.168.1.180:554/stream1", "user": "", "password": "" },
+    { "url": "rtsp://192.168.1.131:554/stream1", "user": "", "password": "" }
   ]
 }

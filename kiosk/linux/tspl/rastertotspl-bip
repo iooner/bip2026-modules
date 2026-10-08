@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""Filtre CUPS : raster CUPS (gris 8 bits ou 1 bit) -> TSPL (imprimantes d'étiquettes LW650XL PRO et cousines).
+
+Installé dans /usr/lib/cups/filter/ et appelé par CUPS via tspl-label.ppd.
+Les photos sont tramées (Floyd-Steinberg) pour un rendu correct en thermique noir et blanc.
+"""
+import struct
+import sys
+
+# Décalage (en points, 300 dpi) entre l'origine de l'imprimante et le coin de l'étiquette,
+# mesuré sur la LW650XL PRO avec les étiquettes 59×102 mm : à retoucher si l'image est décalée.
+OFFSET_X = 10   # dans la largeur de la machine
+OFFSET_Y = 63   # dans le sens de sortie du papier
+# Rendu des gris : le thermique noircit beaucoup, on éclaircit les tons moyens avant le tramage.
+BLACK_POINT = 0.10   # en dessous (0 = noir, 1 = blanc) : noir franc (texte, logo)
+WHITE_POINT = 0.92   # au-dessus : blanc franc (fond du papier)
+GAMMA = 0.60         # < 1 éclaircit les tons moyens, 1 = neutre
+TONE = bytes(round(255 * min(1.0, max(0.0, (v / 255 - BLACK_POINT) / (WHITE_POINT - BLACK_POINT))) ** GAMMA)
+             for v in range(256))
+
+
+def read_exact(f, n):
+    b = f.read(n)
+    if len(b) != n:
+        raise EOFError
+    return b
+
+
+def read_page(f, compressed, endian):
+    h = f.read(1796)
+    if len(h) < 1796:
+        return None
+    u = lambda off: struct.unpack_from(endian + "I", h, off)[0]
+    page = dict(dpi=u(276), width=u(372), height=u(376), bpc=u(384), bpp=u(388), bpl=u(392), cspace=u(400))
+    rows, px = [], max(1, page["bpp"] // 8)
+    while len(rows) < page["height"]:
+        if not compressed:
+            rows.append(read_exact(f, page["bpl"]))
+            continue
+        rep = read_exact(f, 1)[0] + 1
+        line = bytearray()
+        while len(line) < page["bpl"]:
+            n = read_exact(f, 1)[0]
+            if n < 128:
+                line += read_exact(f, px) * (n + 1)
+            else:
+                line += read_exact(f, px * (257 - n))
+        rows.extend([bytes(line[:page["bpl"]])] * rep)
+    page["rows"] = rows[:page["height"]]
+    return page
+
+
+def to_bits(page):
+    """Lignes TSPL : 1 bit par point, 0 = noir, 1 = blanc."""
+    w, h, wb = page["width"], page["height"], (page["width"] + 7) // 8
+    white_is_high = page["cspace"] in (0, 18)          # W / sGray : 255 = blanc ; K : 255 = noir
+    out = bytearray()
+    if page["bpp"] == 1:
+        for r in page["rows"]:
+            r = r[:wb].ljust(wb, b"\0")
+            out += r if white_is_high else bytes(b ^ 0xFF for b in r)
+        return wb, out
+    err_next = [0.0] * (w + 2)
+    for r in page["rows"]:
+        err, err_next = err_next, [0.0] * (w + 2)
+        line = bytearray(b"\xff" * wb)
+        for x in range(w):
+            v = TONE[r[x] if white_is_high else 255 - r[x]]   # v : 0 = noir, 255 = blanc
+            v += err[x + 1]
+            if v < 128:
+                line[x >> 3] &= ~(0x80 >> (x & 7)) & 0xFF
+                e = v
+            else:
+                e = v - 255
+            err[x + 2] += e * 7 / 16
+            err_next[x] += e * 3 / 16
+            err_next[x + 1] += e * 5 / 16
+            err_next[x + 2] += e / 16
+        out += line
+    return wb, out
+
+
+def main():
+    copies = int(sys.argv[4]) if len(sys.argv) > 4 and sys.argv[4].isdigit() else 1
+    f = open(sys.argv[6], "rb") if len(sys.argv) > 6 else sys.stdin.buffer
+    out = sys.stdout.buffer
+    sync = f.read(4)
+    if sync not in (b"RaS2", b"RaS3", b"2SaR", b"3SaR"):
+        sys.stderr.write("ERROR: rastertotspl-bip : entrée non raster CUPS\n")
+        return 1
+    endian = ">" if sync.startswith(b"RaS") else "<"
+    compressed = b"2" in sync
+    n = 0
+    while True:
+        try:
+            page = read_page(f, compressed, endian)
+        except EOFError:
+            page = None
+        if not page:
+            break
+        n += 1
+        # Les étiquettes défilent en paysage (102 mm sous la tête, 59 mm d'avance) : une page portrait est pivotée de 90°.
+        if page["bpp"] == 8 and page["height"] > page["width"]:
+            rows, w, h = page["rows"], page["width"], page["height"]
+            cols = [bytes(r[x] for r in reversed(rows)) for x in range(w)]
+            page.update(rows=cols, width=h, height=w, bpl=h)
+        wb, bits = to_bits(page)
+        mm = lambda dots: round(dots * 25.4 / page["dpi"], 1)
+        out.write(f"\r\nSIZE {mm(page['width'])} mm,{mm(page['height'])} mm\r\nDIRECTION 0\r\nCLS\r\n".encode())
+        out.write(f"BITMAP {OFFSET_X},{OFFSET_Y},{wb},{page['height']},0,".encode() + bytes(bits))
+        out.write(f"\r\nPRINT {copies}\r\n".encode())
+        out.flush()
+        sys.stderr.write(f"PAGE: {n} {copies}\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

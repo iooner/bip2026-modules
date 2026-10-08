@@ -6,13 +6,13 @@
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Voilà comment le miroir te voit.",
           error: "La photo n’a pas pu être prise. Réessaie dans un instant.",
-          again: "Recommencer" },
+          again: "Recommencer", done: "Terminé" },
     en: { hint: "Stand in the middle\nand strike your best pose!",
           take: "Take a photo", title: "Your 360°",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "This is how the mirror sees you.",
           error: "The photo could not be taken. Try again in a moment.",
-          again: "Start again" },
+          again: "Start again", done: "Done" },
   };
   const $ = (s, el = document) => el.querySelector(s);
   const stage = $("#stage");
@@ -65,7 +65,13 @@
     show("shoot"); poke();
   }));
   $(".restart").addEventListener("click", reset);
-  $(".again").addEventListener("click", reset);
+  $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue
+  // « Recommencer » : retour à la prise de vue dans la même langue (l'accueil revient après inactivité)
+  $(".again").addEventListener("click", () => {
+    clearTimeout(resultTimer);
+    busy = false; $("#shoot").classList.remove("counting", "flashing");
+    show("shoot"); poke();
+  });
 
   // --- Prise de vue ---
   $(".take").addEventListener("click", async () => {
@@ -80,6 +86,8 @@
     }
     cd.textContent = "";
     shoot.classList.add("flashing");
+    // Le flux des caméras arrive avec un léger retard : on attend qu'il rattrape l'instant du flash
+    if (C.SHOT_DELAY_MS > 0) await wait(C.SHOT_DELAY_MS);
     const shots = await grabAll();
     shoot.classList.remove("flashing", "counting");
     if (!busy) return;
@@ -133,6 +141,7 @@
     ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
+  let lastCam = -1;
   function compose(shots) {
     const ok = shots.flatMap((s, i) => s ? [i] : []);
     if (!ok.length) return null;
@@ -143,7 +152,9 @@
       const gap = px(1), w = (c.width - gap) / 2, h = (c.height - gap) / 2;
       shots.forEach((s, i) => s && drawCrop(ctx, s, C.CROP[i], (i % 2) * (w + gap), Math.floor(i / 2) * (h + gap), w, h));
     } else {
-      const i = ok[Math.floor(Math.random() * ok.length)];
+      // Tirage au hasard, jamais deux fois de suite la même caméra
+      const pool = ok.length > 1 ? ok.filter(k => k !== lastCam) : ok;
+      const i = lastCam = pool[Math.floor(Math.random() * pool.length)];
       console.log("Caméra tirée :", i + 1);
       drawCrop(ctx, shots[i], C.CROP[i], 0, 0, c.width, c.height);
     }
@@ -154,6 +165,7 @@
     const t = UI[lang], url = compose(shots);
     $("#result .title").textContent = t.title;
     $("#result .again").textContent = t.again;
+    $("#result .done").textContent = t.done;
     const photo = $("#result .photo"), lphoto = $(".l-photo");
     photo.hidden = !url;
     $("#result .printing").textContent = !url ? t.error : C.PRINT ? t.printing : t.noprint;

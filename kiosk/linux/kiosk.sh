@@ -2,10 +2,14 @@
 # Lance un module en kiosk plein écran et le relance s'il se ferme ou plante.
 # Usage : kiosk.sh module1
 set -u
+# Groupe de processus à part : le nettoyage final (kill 0) ne doit arrêter que le kiosk,
+# jamais la session graphique qui l'a lancé (sinon déconnexion à l'arrêt du script).
+if [ "$(ps -o pgid= -p $$ | tr -d ' ')" != "$$" ]; then exec setsid "$0" "$@"; fi
 MODULE="${1:?usage: kiosk.sh moduleN}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 URL="file://$ROOT/$MODULE/index.html"
 PROFILE="$HOME/.cache/bip2026-kiosk-$MODULE"
+RELAUNCH_S=15   # délai avant relance du navigateur s'il est fermé (Alt+F4) : le temps de reprendre la main
 BROWSER="$(command -v chromium || command -v chromium-browser || command -v google-chrome)"
 
 # Module avec serveur local (ex. module2 : relais des caméras IP) : lancé et relancé en tâche de fond
@@ -33,7 +37,7 @@ while true; do
   "$BROWSER" --kiosk --kiosk-printing --noerrdialogs --disable-infobars \
     --disable-pinch --overscroll-history-navigation=0 --disable-session-crashed-bubble \
     --autoplay-policy=no-user-gesture-required \
-    --disable-features=Translate --no-first-run --check-for-update-interval=31536000 \
-    --user-data-dir="$PROFILE" "$URL"
-  sleep 2
+    --disable-features=Translate,TranslateUI --no-first-run --check-for-update-interval=31536000 \
+    --password-store=basic --user-data-dir="$PROFILE" "$URL"
+  sleep "$RELAUNCH_S"
 done
