@@ -201,8 +201,8 @@
   }
 
   // --- Présence des caméras (server.py, GET /cameras) ---
-  // Aucune caméra vivante : bandeau « pause technique ». Certaines seulement : liste en petit, sans bandeau
-  // (le tirage les ignore déjà).
+  // Plus de CAMERAS_DOWN_OK caméras absentes (ou toutes) : bandeau « pause technique ».
+  // Sinon, les absentes sont listées en petit, sans bandeau (le tirage les ignore déjà).
   async function checkCameras() {
     let cams;
     try {
@@ -210,11 +210,13 @@
       cams = (await r.json()).filter(c => c.ok !== null);
     } catch { return; }              // page ouverte sans server.py (essai) : rien à vérifier
     const down = cams.filter(c => !c.ok);
-    if (cams.length && down.length === cams.length)
-      KioskStatus.report("cameras", "aucune caméra ne répond (" + (down[0].error || "pas d'image") + ")");
+    const ids = down.map(c => c.n).join(", ");
+    const outage = down.length && (down.length > C.CAMERAS_DOWN_OK || down.length === cams.length);
+    if (outage)
+      KioskStatus.report("cameras", "caméra(s) " + ids + " sans image (" + (down[0].error || "pas d'image") + ")");
     else KioskStatus.clear("cameras");
-    if (down.length && down.length < cams.length)
-      KioskStatus.warn("cameras", "absente(s) : " + down.map(c => c.n).join(", "));
+    if (down.length && !outage)
+      KioskStatus.warn("cameras", "absente(s) : " + ids);
     else KioskStatus.unwarn("cameras");
   }
   if (C.CAMERAS_URL && location.protocol.startsWith("http")) {

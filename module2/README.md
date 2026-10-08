@@ -50,8 +50,8 @@ réseau ou caméra débranchée : reconnexion automatique. Réglages optionnels 
 
 ### Présence des caméras
 `server.py` sait à tout moment quelles caméras envoient des images (`GET /cameras`, vérifié toutes les 5 s par
-la page). Aucune caméra : bandeau « pause technique » sur l'accueil. Certaines seulement : pas de bandeau (le
-tirage les ignore), leur numéro est écrit en petit en bas à droite de l'accueil.
+la page). Deux caméras absentes ou plus : bandeau « pause technique » sur l'accueil. Une seule : pas de bandeau
+(le tirage l'ignore), son numéro est écrit en petit en bas à droite de l'accueil. Seuil : `CAMERAS_DOWN_OK`.
 
 ### Qualité d'image
 Le serveur garde les images clés de `stream1` en JPEG qualité max. Si l'image reste moyenne, c'est la
