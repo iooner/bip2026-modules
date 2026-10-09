@@ -37,10 +37,25 @@ Le pont suit la personne la plus proche du centre.
 ```
 python3 bridge/kinect_bridge.py --source freenect   # Kinect v1 via libfreenect : pas de squelette,
                                                     # tête/mains/pieds tirés de la silhouette en profondeur
-python3 bridge/kinect_bridge.py --source webcam     # webcam + MediaPipe (pip install opencv-python mediapipe)
+python3 bridge/kinect_bridge.py --source kinect     # Kinect v1 + vrai squelette (MediaPipe sur sa caméra couleur,
+                                                    # profondeur pour la zone et en repli) : PC type Core i5
+python3 bridge/kinect_bridge.py --source webcam     # webcam + MediaPipe
 python3 bridge/kinect_bridge.py --source fake       # test sans matériel
 ```
 Options : `--near 1.2 --far 3.5` (zone de la personne, en mètres), `--smooth`, `--no-mirror`.
 Installation Linux : `./kiosk/linux/setup-pi.sh module4 && ./module4/bridge/setup-pi.sh`.
+
+Squelette MediaPipe (sources `kinect` et `webcam`), dans un environnement Python à part que `bridge/start.sh` utilise
+s'il existe, avec le modèle de pose à côté du décor appris :
+```
+sudo apt install python3-venv libfreenect0.5t64
+echo "blacklist gspca_kinect" | sudo tee /etc/modprobe.d/bip2026-kinect.conf   # pilote webcam du noyau : gêne libfreenect
+python3 -m venv ~/bip2026-local/venv && ~/bip2026-local/venv/bin/pip install mediapipe numpy websockets
+curl -fL -o ~/.cache/bip2026/pose_landmarker_full.task \
+  https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task
+./module4/bridge/start.sh kinect
+```
+La caméra couleur a besoin de lumière sur la personne ; dans le noir, le pont retombe sur la silhouette en profondeur
+(décor vide à réapprendre sur place : F9). Mesuré sur un Optiplex XE2 (i5-4570S) : 29 images/s, un cœur sur quatre occupé.
 
 **Non testé sur le matériel** : le pont Windows est compilé ici contre une maquette du SDK, pas avec une vraie Kinect.
