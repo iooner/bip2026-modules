@@ -53,21 +53,37 @@ em { font-style: italic; }
 #welcome .credit { position: absolute; left: 48px; bottom: 14px; font-size: 15px; letter-spacing: .02em; opacity: .75; }
 #welcome .credit span { color: var(--mauve); font-size: 1.7em; line-height: 0; vertical-align: -0.14em; }
 
-/* Consignes */
-#steps { background: linear-gradient(to bottom, var(--mauve), var(--pink)); color: var(--navy);
-  padding: 36px 56px 44px; display: flex; flex-direction: column; }
+/* Consignes : écran sombre « scanner », pictogrammes en frise (pas de cartes blanches numérotées, qui
+   ressemblaient aux réponses du test du module 1 et donnaient envie d'appuyer dessus) */
+#steps { background: var(--navy); color: #fff; padding: 36px 56px 40px; display: flex; flex-direction: column; }
 #steps header { display: flex; align-items: center; justify-content: space-between; font-size: 18px;
-  text-transform: uppercase; color: #fff; }
-#steps .title { margin: 28px 0 30px; font-size: 56px; font-weight: 500; line-height: 1.05; color: #fff; }
-#steps .list { list-style: none; flex: 1; display: flex; flex-direction: column; gap: 16px; }
-#steps .list li { flex: 1; display: flex; align-items: center; gap: 26px; padding: 0 30px;
-  background: rgba(255,255,255,.88); font-size: 30px; line-height: 1.2; }
-#steps .list b { flex: none; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
-  border: 3px solid currentColor; font-size: 30px; font-weight: 500; }
-#steps footer { margin-top: 26px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-#steps .waiting { display: flex; align-items: center; gap: 16px; font-size: 24px; font-weight: 500; }
-.simulate { height: 64px; padding: 0 28px; border: 3px dashed var(--navy); font-size: 20px; }
-.simulate:active { background: var(--navy); color: #fff; }
+  text-transform: uppercase; color: var(--pink); }
+#steps .title { margin: 22px 0 0; font-size: 52px; font-weight: 500; line-height: 1.05; }
+#steps .list { list-style: none; flex: 1; margin-top: 52px; display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0 30px; align-content: start; }
+#steps .list li { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+  font-size: 21px; line-height: 1.25; }
+#steps .list li:not(:last-child)::after { content: ""; position: absolute; top: 44px; left: 104px; right: -18px;
+  border-top: 2px dashed rgba(255,255,255,.3); }   /* pointillé jusqu'à l'étape suivante */
+#steps .list .ico { width: 88px; height: 88px; fill: none; stroke: var(--pink); stroke-width: 2.5;
+  stroke-linecap: round; stroke-linejoin: round; }
+#steps .list b { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border-radius: 50%; background: var(--pink); color: var(--navy); font-size: 18px; font-weight: 500; }
+/* bandeau du bas, façon moniteur du scanner : ce qu'il attend + vue de la caméra */
+#steps footer { margin-top: 26px; min-height: 124px; display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; padding: 16px 16px 16px 28px; background: #0b0a1c; border: 3px solid var(--grey); }
+#steps .waiting { display: flex; align-items: center; gap: 18px; font-size: 26px; line-height: 1.2; font-weight: 700;
+  white-space: pre-line; }
+.simulate { height: 64px; padding: 0 28px; border: 3px dashed var(--pink); color: var(--pink); font-size: 20px; }
+#steps .live { flex: none; width: 288px; height: 162px; object-fit: cover; background: var(--navy); }
+#debug { position: fixed; inset: 0; z-index: 50; width: 100%; height: 100%; object-fit: contain; background: #000; }
+/* le bandeau prend la couleur de l'état : orange = on attend, vert = bac en place, rouge = à corriger */
+#steps footer { transition: background .25s, border-color .25s; }
+#steps footer:has(.waiting[data-code="absent"]), #steps footer:has(.waiting[data-code="moving"]) { background: #c9791a; border-color: #f0a030; }
+#steps footer:has(.waiting[data-code="hold"]) { background: #1c8f4d; border-color: #2bd46f; }
+#steps footer:has(.waiting[data-code="partial"]), #steps footer:has(.waiting[data-code="done"]) { background: #b93a30; border-color: #e0483c; }
+#steps .waiting .xbox { flex: none; font-style: normal; }   /* le ✕ encadré de l'expo à la place d'un voyant */
+.simulate:active { background: var(--pink); color: var(--navy); }
 
 /* Voyant : orange clignotant en attente / scan, vert quand c'est autorisé */
 .lamp { flex: none; width: 22px; height: 22px; border-radius: 50%; background: #f0a030;
@@ -82,16 +98,23 @@ em { font-style: italic; }
 #xray { width: 100%; height: 100%; display: block; visibility: hidden; }
 #scan .caption { margin-top: 12px; display: flex; justify-content: space-between; font-size: 16px;
   letter-spacing: .08em; color: var(--grey); font-variant-numeric: tabular-nums; }
-#scan .tag { color: var(--pink); }
+#scan .tag { color: var(--pink); display: inline-flex; align-items: center; gap: .35em; }
+#scan .tag .xmark { display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em;
+  border: 2px solid currentColor; font-style: normal; font-weight: 500; line-height: 1; }
+/* Balayage de droite à gauche. Le rideau et le faisceau ne bougent que par `transform` : l'animation tourne
+   hors du fil principal du navigateur et ne saute pas pendant les calculs de la page. */
+#scan .cover { position: absolute; inset: 0; display: none; background: #0b0a1c; will-change: transform; }
 #scan .beam { position: absolute; top: 0; bottom: 0; left: 0; width: 6px; opacity: 0;
+  transform: translateX(692px); will-change: transform, opacity;
   background: #fff; box-shadow: 0 0 18px 6px rgba(222,182,180,.9), 0 0 60px 20px rgba(152,117,139,.6); }
-#scan.waiting .beam { opacity: .6; animation: idle 1.4s ease-in-out infinite alternate; }
-@keyframes idle { from { left: 0; } to { left: calc(100% - 6px); } }
+/* en attente de la photo : le faisceau pulse sur place, à droite, là d'où partira le balayage */
+#scan.waiting .beam { animation: idle .7s ease-in-out infinite alternate; }
+@keyframes idle { from { opacity: .2; } to { opacity: .85; } }
 #scan.scanning #xray, #scan.cleared #xray { visibility: visible; }
-#scan.scanning #xray { animation: reveal var(--scan-s, 4s) linear both; }
+#scan.scanning .cover { display: block; animation: reveal var(--scan-s, 4s) linear both; }
 #scan.scanning .beam { opacity: 1; animation: sweep var(--scan-s, 4s) linear both; }
-@keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-@keyframes sweep { from { left: 0; } to { left: calc(100% - 6px); } }
+@keyframes reveal { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes sweep { from { transform: translateX(692px); } to { transform: translateX(0); } }
 #scan .stamp { position: absolute; left: 50%; top: 50%; padding: 14px 34px 18px; text-align: center;
   border: 7px solid #1f9d55; color: #1f9d55; background: rgba(255,255,255,.82);
   transform: translate(-50%, -50%) rotate(-8deg) scale(2.2); opacity: 0; transition: opacity .2s, transform .25s cubic-bezier(.2,1.6,.4,1); }
@@ -99,14 +122,18 @@ em { font-style: italic; }
 #scan .stamp span { display: block; margin-top: 6px; font-size: 22px; font-weight: 500; text-transform: uppercase; }
 #scan.cleared .stamp { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); }
 #scan aside { flex: 1; height: 568px; display: flex; flex-direction: column; }
-#scan .lettering.small { width: 150px; align-self: flex-end; opacity: .9; }
+#scan .lettering.small { width: 120px; align-self: flex-end; opacity: .9; }
 #scan aside .kicker { margin-top: 24px; font-size: 18px; text-transform: uppercase; color: var(--pink); }
 #scan .info { margin-top: 14px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 18px;
   font-variant-numeric: tabular-nums; }
 #scan .info dt { color: var(--grey); }
 #scan .status { margin-top: auto; display: flex; align-items: center; gap: 14px; font-size: 22px; line-height: 1.2; font-weight: 500; }
 #scan.cleared .lamp { background: #2bd46f; box-shadow: 0 0 16px #2bd46f; animation: none; }
-#scan .printing { margin-top: 16px; min-height: 92px; font-size: 18px; line-height: 1.3; color: var(--grey); }
+#scan .printing { margin-top: 16px; min-height: 66px; font-size: 18px; line-height: 1.3; color: var(--grey); }
+#scan .home { display: none; margin-top: 16px; height: 64px; background: var(--pink); color: var(--navy);
+  font-size: 22px; font-weight: 500; transition: transform .1s, background .1s; }
+#scan.cleared .home { display: block; }
+#scan .home:active { transform: scale(.97); background: #fff; }
 
 #offline { position: fixed; right: 4px; bottom: 4px; padding: 2px 6px; font: 11px monospace;
   background: #c33; color: #fff; z-index: 9; }

@@ -33,8 +33,9 @@
     <h2 class="title"></h2>
     <ol class="list"></ol>
     <footer>
-      <p class="waiting"><i class="lamp"></i><span></span></p>
+      <p class="waiting"><i class="xbox">✕</i><span></span></p>
       <button class="simulate" hidden></button>
+      <img class="live" alt="" hidden>
     </footer>
   </section>
 
@@ -42,6 +43,7 @@
     <div class="monitor">
       <div class="view">
         <canvas id="xray" width="960" height="720"></canvas>
+        <div class="cover"></div>
         <div class="beam"></div>
         <div class="stamp"><b></b><span></span></div>
       </div>
@@ -53,6 +55,7 @@
       <dl class="info"></dl>
       <p class="status"><i class="lamp"></i><span></span></p>
       <p class="printing"></p>
+      <button class="home"></button>
     </aside>
   </section>
 
@@ -74,6 +77,9 @@
   <dl class="l-info"></dl>
   <canvas class="l-code" width="600" height="60"></canvas>
 </div>
+
+<!-- Vue de réglage de la caméra : appui de 5 s sur le ✕ de l'accueil, un appui pour fermer -->
+<img id="debug" alt="" hidden>
 
 <!-- Filtres « rayons X » appliqués à la photo (paramètres réglés par app.js) -->
 <svg width="0" height="0" style="position:absolute">
