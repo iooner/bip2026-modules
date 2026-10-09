@@ -89,7 +89,9 @@
   // Vue en direct de la caméra sur l'écran des consignes (helper en mode webcam) : le visiteur voit
   // son bac se placer, cadre vert quand il est bien dans le champ. Flux coupé hors de cet écran.
   const live = $("#steps .live");
-  live.onerror = () => { live.hidden = true; };       // helper sans webcam (Pi) ou injoignable
+  // Pas d'image : helper sans webcam (Pi), ou pas encore prêt (au lancement de la borne, la caméra met
+  // quelques secondes à démarrer). On réessaie tant qu'on est sur cet écran.
+  live.onerror = () => { live.hidden = true; setTimeout(() => state === "steps" && setLive(true), 2000); };
   function setLive(on) {
     if (SIM || C.LIVE_PREVIEW === false) return;
     live.hidden = !on;

@@ -58,13 +58,13 @@ em { font-style: italic; }
 #steps { background: var(--navy); color: #fff; padding: 36px 56px 40px; display: flex; flex-direction: column; }
 #steps header { display: flex; align-items: center; justify-content: space-between; font-size: 18px;
   text-transform: uppercase; color: var(--pink); }
-#steps .title { margin: 22px 0 0; font-size: 52px; font-weight: 500; line-height: 1.05; }
+#steps .title { margin: 22px 0 0; font-size: 52px; font-weight: 500; line-height: 1.05; text-align: center; }
 #steps .list { list-style: none; flex: 1; margin-top: 52px; display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 0 30px; align-content: start; }
-#steps .list li { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
-  font-size: 21px; line-height: 1.25; }
-#steps .list li:not(:last-child)::after { content: ""; position: absolute; top: 44px; left: 104px; right: -18px;
-  border-top: 2px dashed rgba(255,255,255,.3); }   /* pointillé jusqu'à l'étape suivante */
+  gap: 0 30px; align-content: center; }
+#steps .list li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px;
+  font-size: 21px; line-height: 1.25; text-align: center; }
+#steps .list li:not(:last-child)::after { content: ""; position: absolute; top: 44px; left: calc(50% + 62px);
+  width: calc(100% - 94px); border-top: 2px dashed rgba(255,255,255,.3); }   /* pointillé jusqu'à l'étape suivante */
 #steps .list .ico { width: 88px; height: 88px; fill: none; stroke: var(--pink); stroke-width: 2.5;
   stroke-linecap: round; stroke-linejoin: round; }
 #steps .list b { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px;

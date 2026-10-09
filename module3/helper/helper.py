@@ -317,6 +317,9 @@ def make_handler(camera, args):
                 try:
                     while True:  # environ 12 images/s, jusqu'à ce que la page ferme le flux
                         jpg = camera.live("debug" in self.path)
+                        if not jpg:  # caméra pas encore prête
+                            time.sleep(.2)
+                            continue
                         self.wfile.write(b"--image\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n" % len(jpg))
                         self.wfile.write(jpg + b"\r\n"); self.wfile.flush()
                         time.sleep(0.08)
