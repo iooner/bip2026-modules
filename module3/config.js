@@ -8,6 +8,9 @@ window.CONFIG = {
   HELPER_URL: "http://127.0.0.1:8765",
 
   // Cadrage de la photo (fractions de l'image : 0 = rien rogné), rotation 0/90/180/270, miroir.
+  // FIT "contain" : tout le bac est visible, le cadre de la photo prend sa forme (écran et étiquette) ;
+  // "cover" : cadre 4:3 rempli, ce qui dépasse est rogné.
+  FIT: "contain",
   CROP: { left: 0, top: 0, right: 0, bottom: 0 },
   ROTATE: 0,
   MIRROR: false,
@@ -25,6 +28,16 @@ window.CONFIG = {
   SCAN_CONTRAST: 1.3,
   SCAN_BRIGHTNESS: 0,
   SCAN_INVERT: false,
+  // PRINT_STYLE, rendu de la photo sur l'étiquette :
+  //   "net"    fond du bac blanchi, objets sombres, contours marqués
+  //   "trait"  seulement le contour des objets, en trait noir sur blanc
+  //   "rx"     un rendu rayons X en noir et blanc ; PRINT_RX choisit lequel ("radio", "neon", "aeroport", "noir"),
+  //            PRINT_NEGATIVE: true l'inverse (fond blanc au lieu de noir : beaucoup moins d'encre)
+  //   "filtre" ancien rendu, simple photo en niveaux de gris
+  PRINT_STYLE: "rx",
+  PRINT_RX: "neon",
+  PRINT_NEGATIVE: true,
+  PRINT_INK: 2,           // rendu "rx" en négatif : renfort des noirs (1 = aucun, 3 = très marqué)
   PRINT_CONTRAST: 1.6,
   PRINT_BRIGHTNESS: 0.05,
 

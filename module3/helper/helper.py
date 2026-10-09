@@ -16,8 +16,9 @@ sorte du champ, ou qu'il soit poussé par un autre bac au contenu différent.
 
 Points d'accès (http://127.0.0.1:8765) :
   GET  /events          flux SSE : « trigger » puis « photo » {"url": "/photo/N.jpg"} ou « failed » ;
-                        mode webcam : « state » {"code": absent | partial | moving | hold | done}
+                        mode webcam : « state » {"code": absent | partial | moving | hold | empty | done | nocam}
   POST /trigger         simule le GPIO (touche Espace de la page, tests)
+  POST /learn           mode webcam : apprend la couleur de la bordure du bac posé sous la caméra ; /forget : d'origine
   GET  /photo/N.jpg     dernière photo
   GET  /live.mjpg       mode webcam : petite vidéo en direct pour l'écran des consignes (cadre vert = bac en place)
   GET  /live.mjpg?debug mode webcam : la même en grand, avec l'état du suivi (vue de réglage de la page)
@@ -86,12 +87,14 @@ class Webcam:
     MOVE = 0.04    # déplacement d'un coin (part de la largeur d'image) qui relance l'attente
     GONE = 0.3     # bac sorti : le plus grand morceau de bordure couvre moins de cette part du bac scanné
     PARTIAL = 0.05  # un morceau de bordure couvre au moins cette part de l'image : bac présent mais coupé
+    BOOT = 20      # secondes après le lancement pendant lesquelles un bac déjà en place n'est pas scanné
     LOST = 0.4     # bac perdu de vue plus longtemps que ça (s) = dérangé (poussé, bord caché…)
     PUSH = 0.2     # bac déplacé de plus de cette part de sa taille = dérangé
     SAME = 12.0    # écart moyen de gris (0…255) sous lequel deux bacs ont le même contenu
     MOTION = 0.004  # part des pixels du bac qui changent entre deux images : une main bouge dedans
 
     def __init__(self, args, trigger):
+        os.environ.setdefault("OPENCV_LOG_LEVEL", "ERROR")  # pas un avertissement par essai quand la webcam est absente
         import cv2, numpy as np
         sys.path.insert(0, HERE)
         import bac
@@ -101,9 +104,9 @@ class Webcam:
         self.lock = threading.Lock()
         self.frame = self.quad = None
         self.info = {}
+        # Webcam absente ou illisible au lancement : on démarre quand même, la page affiche la panne
+        # (état « nocam ») et le suivi reprend tout seul dès qu'elle est rebranchée.
         self.cap = bac.ouvre(args.webcam, self.size)
-        if not self.cap.read()[0]:
-            raise RuntimeError(f"webcam {args.webcam} illisible")
         log("Caméra : webcam", args.webcam, args.cam_size, f"(bac immobile {args.stable} s = passage)")
         threading.Thread(target=self.watch, daemon=True).start()
 
@@ -127,12 +130,22 @@ class Webcam:
         disturbed = False    # ce bac a été perdu de vue ou déplacé depuis son scan
         why = "pret pour un passage"
         code, shown, code_at = "absent", None, 0   # état annoncé à la page (événement « state »)
+        boot = time.monotonic() + self.BOOT        # jusque-là, un bac déjà en place est un bac oublié, pas un visiteur
         while True:
             ok, frame = self.cap.read()
-            if not ok:  # webcam débranchée : on la rouvre
-                log("Webcam : lecture impossible, nouvel essai")
+            if not ok:  # webcam débranchée : on le dit à la page (bandeau « en panne ») et on la rouvre
+                if shown != "nocam":
+                    log("Webcam : lecture impossible (débranchée ?), nouvel essai toutes les 2 s")
+                    code = shown = "nocam"
+                    self.info = {"code": shown, "why": "webcam illisible"}
+                    with self.lock:
+                        self.frame = self.quad = None
+                    broadcast("state", {"code": shown})
                 time.sleep(2); self.cap.release(); self.cap = bac.ouvre(args.webcam, self.size)
+                ref, quads, prev = None, [], None
                 continue
+            if shown == "nocam":
+                log("Webcam : de retour")
             now = time.monotonic()
             fps, last = fps * .9 + .1 / max(now - last, 1e-3), now
             quad = bac.detect(frame, seen)
@@ -146,6 +159,7 @@ class Webcam:
             # Ce que le scanner attend, pour l'écran des consignes : bac absent, coupé par le bord de l'image,
             # encore en mouvement, immobile (le scan arrive) ou déjà scanné. Annoncé une fois stable 0,3 s.
             state = ("absent" if seen["orange"] < self.PARTIAL else "partial") if quad is None else \
+                    "empty" if shot and shot.get("empty") and not disturbed else \
                     "done" if shot and not disturbed else \
                     "moving" if ref is None or now - since < .3 else "hold"
             if state != code:
@@ -173,14 +187,24 @@ class Webcam:
                 if moved or motion > self.MOTION:
                     ref, since, quads = quad, now, []
                 quads.append(quad)
-                # sans page à l'écoute, on attend
-                if clients and now - since >= args.stable and (shot is None or disturbed):
+                # sans page à l'écoute, on attend (sauf pour noter le bac resté là au lancement)
+                # (un bac vide est réexaminé en continu : dès qu'on y pose quelque chose et qu'on le lâche, il est scanné)
+                if (clients or now < boot) and now - since >= args.stable and (shot is None or disturbed or shot.get("empty")):
                     quad = np.median(quads, axis=0)  # coins lissés sur toute l'attente
                     sig = self.empreinte(frame, quad)
                     diff = float(np.abs(sig - shot["sig"]).mean()) if shot else 255.0
                     place = {"center": quad.mean(0), "size": cv2.contourArea(quad.astype(np.float32)) ** .5, "orange": seen["orange"]}
                     disturbed = False
-                    if diff < self.SAME:  # même bac, seulement bousculé : pas de second scan
+                    if bac.is_empty(frame, quad):  # rien dedans : pas de scan, la page le dit au visiteur
+                        if not (shot and shot.get("empty")):
+                            log("Bac vide : pas de scan")
+                        shot = dict(place, sig=sig, empty=True)
+                        why = "bac vide : pas de scan"
+                    elif shot is None and now < boot:  # bac resté sous la caméra au lancement : pas de scan
+                        shot, boot = dict(place, sig=sig), 0
+                        why = "bac deja la au lancement : pas de scan (le sortir, ou en pousser un autre)"
+                        log("Bac déjà en place au lancement : pas de scan")
+                    elif diff < self.SAME and not shot.get("empty"):  # même bac, seulement bousculé : pas de second scan
                         shot.update(place)
                         why = f"meme contenu qu'au dernier scan (ecart {diff:.1f}) : pas de nouveau scan"
                         log(f"Même bac (écart {diff:.1f} < {self.SAME}) : pas de nouveau scan")
@@ -202,7 +226,8 @@ class Webcam:
             frame, quad = self.frame, self.quad
         if frame is None:
             raise RuntimeError("pas encore d'image de la webcam")
-        img = self.bac.redresse(frame, quad, self.args.inset) if quad is not None else frame
+        # bac vide appris : la photo ne garde que le fond du bac, sans la bordure ni les parois
+        img = self.bac.redresse(frame, quad, self.args.inset, self.bac.EMPTY["walls"]) if quad is not None else frame
         return self.cv2.imencode(".jpg", img, [self.cv2.IMWRITE_JPEG_QUALITY, 90])[1].tobytes(), "image/jpeg"
 
     def live(self, debug=False):
@@ -223,11 +248,28 @@ class Webcam:
                      f"mouvement dans le bac : {i.get('motion', 0) * 100:.1f} %  (seuil {self.MOTION * 100:.1f} %)",
                      f"immobile depuis {i.get('still', 0):.1f} s  (passage a {self.args.stable} s)",
                      i.get("why", ""),
-                     f"{i.get('fps', 0):.0f} images/s   {frame.shape[1]}x{frame.shape[0]}"]
+                     f"{i.get('fps', 0):.0f} images/s   {frame.shape[1]}x{frame.shape[0]}",
+                     "bordure : teinte {h_lo}-{h_hi}, saturation >= {s_min}, luminosite >= {v_min}".format(**self.bac.COLOR)
+                     + ("" if self.bac.COLOR == self.bac.DEFAULT else "  (bac appris)"),
+                     "bac vide : appris, un bac vide n'est pas scanne" if self.bac.EMPTY["ref"] is not None else
+                     "bac vide : pas appris (un bac vide sera scanne comme les autres)"]
             for n, text in enumerate(lines):
                 for color, thick in (((0, 0, 0), 5), ((255, 255, 255), 2)):
                     cv2.putText(small, text, (16, 34 + 30 * n), cv2.FONT_HERSHEY_SIMPLEX, .75, color, thick, cv2.LINE_AA)
         return cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, 70])[1].tobytes()
+
+    def learn(self, forget=False):
+        """Vue de réglage : apprend la couleur de la bordure du bac posé sous la caméra (ou revient à celle d'origine)."""
+        with self.lock:
+            frame = self.frame
+        if forget:
+            ok, message = self.bac.forget()
+        elif frame is None:
+            ok, message = False, "pas d'image de la webcam"
+        else:
+            ok, message = self.bac.learn(frame)
+        log("Apprentissage du bac :", message)
+        return ok, message
 
     def debug(self):
         with self.lock:
@@ -285,6 +327,9 @@ def make_handler(camera, args):
             if self.path == "/trigger":
                 on_trigger(camera, args)
                 self.head(202, "application/json"); self.wfile.write(b"{}")
+            elif self.path in ("/learn", "/forget") and hasattr(camera, "learn"):
+                ok, message = camera.learn(self.path == "/forget")
+                self.head(200, "application/json"); self.wfile.write(json.dumps({"ok": ok, "message": message}).encode())
             else:
                 self.head(404, "text/plain")
 
@@ -360,8 +405,8 @@ def main():
         try:
             if args.webcam == "auto":
                 import importlib.util
-                if importlib.util.find_spec("picamera2") or not os.path.exists("/dev/video0"):
-                    raise RuntimeError("Pi Camera présente ou pas de /dev/video0")
+                if importlib.util.find_spec("picamera2") or not importlib.util.find_spec("cv2"):
+                    raise RuntimeError("Raspberry Pi (picamera2 présent) ou OpenCV absent")
                 args.webcam = "/dev/video0"
             camera = Webcam(args, lambda: on_trigger(camera, args))
         except Exception as e:

@@ -10,7 +10,8 @@ Rien n'apparaît à l'écran. Si ce service ne tourne pas, les modules reviennen
                                      lu par status.js de chaque module (bandeau « en panne » sur l'accueil)
 Lancé par kiosk/linux/kiosk.sh. Essai sans imprimer : BIP_NO_LP=1 python3 kiosk/print_server.py
 """
-import json, os, re, select, shutil, subprocess, sys, threading, time
+import atexit, base64, json, os, re, select, shutil, signal, socket, struct, subprocess, sys, threading, time
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(os.environ.get("BIP_PRINT_PORT", 8361))   # autre port : essais sans toucher au service de la borne
@@ -19,6 +20,12 @@ LOCK = threading.Lock()   # une étiquette à la fois
 STUCK_S = 30              # une étiquette encore en file après ce délai = imprimante bloquée (vide, éteinte, débranchée…)
 LAST = {"error": None, "printer_msg": None}
 SEEN = {}                 # étiquettes en file -> heure où on les a vues pour la première fois
+# Navigateur invisible gardé ouvert entre deux étiquettes (évite 3 à 4 s de démarrage à chaque impression sur un
+# petit processeur). Au moindre souci, l'étiquette en cours repasse par un lancement classique et le navigateur
+# est relancé pour la suivante. BIP_PRINT_WARM=0 pour ne jamais le garder ouvert.
+WARM = os.environ.get("BIP_PRINT_WARM", "1") != "0"
+CDP_PORT = int(os.environ.get("BIP_CDP_PORT", PORT + 1000))
+BROWSER = {"proc": None}
 
 
 def sh(*cmd):
@@ -132,6 +139,137 @@ def printer_problems(name):
     return out
 
 
+class DevTools:
+    """Dialogue minimal avec un onglet de Chromium (protocole DevTools sur WebSocket, sans dépendance)."""
+    def __init__(self, url, timeout=20):
+        host, path = url.split("://", 1)[1].split("/", 1)
+        name, port = host.split(":")
+        self.sock = socket.create_connection((name, int(port)), timeout=timeout)
+        self.buf, self.n, self.events = b"", 0, []
+        key = base64.b64encode(os.urandom(16)).decode()
+        self.sock.sendall((f"GET /{path} HTTP/1.1\r\nHost: {host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+                           f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n").encode())
+        while b"\r\n\r\n" not in self.buf:
+            self.fill()
+        head, self.buf = self.buf.split(b"\r\n\r\n", 1)
+        if b" 101 " not in head.split(b"\r\n")[0]:
+            raise RuntimeError("WebSocket refusé : " + head[:60].decode("latin1"))
+
+    def fill(self):
+        chunk = self.sock.recv(1 << 16)
+        if not chunk:
+            raise ConnectionError("navigateur fermé")
+        self.buf += chunk
+
+    def read(self, n):
+        while len(self.buf) < n:
+            self.fill()
+        out, self.buf = self.buf[:n], self.buf[n:]
+        return out
+
+    def recv(self):
+        msg = b""
+        while True:
+            b0, b1 = self.read(2)
+            n = b1 & 0x7f
+            if n == 126:
+                n = struct.unpack(">H", self.read(2))[0]
+            elif n == 127:
+                n = struct.unpack(">Q", self.read(8))[0]
+            data = self.read(n)
+            if b0 & 0x0f == 8:
+                raise ConnectionError("navigateur fermé")
+            if b0 & 0x0f in (9, 10):   # ping / pong
+                continue
+            msg += data
+            if b0 & 0x80:
+                return json.loads(msg)
+
+    def call(self, method, **params):
+        self.n += 1
+        data = json.dumps({"id": self.n, "method": method, "params": params}).encode()
+        n, mask = len(data), os.urandom(4)
+        size = bytes([0x80 | n]) if n < 126 else b"\xfe" + struct.pack(">H", n) if n < 1 << 16 else b"\xff" + struct.pack(">Q", n)
+        self.sock.sendall(b"\x81" + size + mask + bytes(c ^ mask[i % 4] for i, c in enumerate(data)))
+        while True:
+            m = self.recv()
+            if m.get("id") == self.n:
+                if "error" in m:
+                    raise RuntimeError(f"{method} : {m['error'].get('message')}")
+                return m.get("result", {})
+            self.events.append(m.get("method"))
+
+    def wait(self, event):
+        while event not in self.events:
+            self.events.append(self.recv().get("method"))
+
+
+def warm_stop(*_):
+    """Arrête le navigateur gardé ouvert et tous ses processus (il a son propre groupe)."""
+    p, BROWSER["proc"] = BROWSER["proc"], None
+    if p:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except OSError:
+            pass
+        p.wait()
+
+
+def warm_ready():
+    try:
+        return bool(urllib.request.urlopen(f"http://127.0.0.1:{CDP_PORT}/json/version", timeout=.5).read())
+    except OSError:
+        return False
+
+
+def warm_launch(exe):
+    """(Re)lance le navigateur gardé ouvert, sans attendre qu'il soit prêt : il servira à l'étiquette suivante."""
+    p = BROWSER["proc"]
+    if p and p.poll() is None and time.time() - BROWSER.get("since", 0) < 15:
+        return   # encore en train de démarrer
+    warm_stop()  # planté ou bloqué : on nettoie ce qu'il en reste
+    profile = f"{DIR}/profil-ouvert"
+    for name in ("SingletonLock", "SingletonCookie", "SingletonSocket"):   # verrous laissés par un plantage
+        try:
+            os.remove(os.path.join(profile, name))
+        except OSError:
+            pass
+    BROWSER["since"] = time.time()
+    BROWSER["proc"] = subprocess.Popen(
+        [exe, "--headless=new", "--disable-gpu", "--no-first-run", "--password-store=basic",
+         f"--remote-debugging-port={CDP_PORT}", f"--user-data-dir={profile}", "about:blank"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def warm_pdf(exe, src, pdf):
+    """Fabrique le PDF dans le navigateur gardé ouvert. False = échec : l'appelant repasse par un lancement classique."""
+    api = f"http://127.0.0.1:{CDP_PORT}/json"
+    if not warm_ready():   # pas (encore) là : cette étiquette n'attend pas, on le relance pour la suivante
+        warm_launch(exe)
+        return False
+    try:
+        tab = json.load(urllib.request.urlopen(urllib.request.Request(api + "/new?about:blank", method="PUT"), timeout=5))
+        try:
+            dt = DevTools(tab["webSocketDebuggerUrl"])
+            dt.call("Page.enable")
+            dt.call("Page.navigate", url="file://" + src)
+            dt.wait("Page.loadEventFired")
+            dt.call("Runtime.evaluate", expression="document.fonts.ready", awaitPromise=True)
+            data = dt.call("Page.printToPDF", printBackground=True, preferCSSPageSize=True, displayHeaderFooter=False,
+                           marginTop=0, marginBottom=0, marginLeft=0, marginRight=0)["data"]
+            dt.sock.close()
+        finally:
+            urllib.request.urlopen(f"{api}/close/{tab['id']}", timeout=5).read()
+        with open(pdf, "wb") as f:
+            f.write(base64.b64decode(data))
+        return True
+    except Exception as e:
+        print("Navigateur gardé ouvert en échec (lancement classique pour cette étiquette) :", e, flush=True)
+        warm_stop()
+        warm_launch(exe)
+        return False
+
+
 def print_label(html):
     os.makedirs(DIR, exist_ok=True)
     src, pdf = os.path.join(DIR, "etiquette.html"), os.path.join(DIR, "etiquette.pdf")
@@ -143,9 +281,10 @@ def print_label(html):
             f.write(html)
         if os.path.exists(pdf):
             os.remove(pdf)
-        subprocess.run([exe, "--headless=new", "--no-pdf-header-footer", "--disable-gpu", "--no-first-run", "--password-store=basic",
-                        f"--user-data-dir={DIR}/profil", f"--print-to-pdf={pdf}", "file://" + src],
-                       timeout=60, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if not (WARM and warm_pdf(exe, src, pdf)):
+            subprocess.run([exe, "--headless=new", "--no-pdf-header-footer", "--disable-gpu", "--no-first-run", "--password-store=basic",
+                            f"--user-data-dir={DIR}/profil", f"--print-to-pdf={pdf}", "file://" + src],
+                           timeout=60, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if not os.path.exists(pdf):
             raise RuntimeError("PDF non produit")
         if os.environ.get("BIP_NO_LP"):
@@ -192,6 +331,11 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     threading.Thread(target=watch_printer, daemon=True).start()
+    if WARM:
+        atexit.register(warm_stop)
+        signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))   # arrêt du kiosk : ferme aussi le navigateur
+        # ouvert dès le lancement du service, pour que la première étiquette soit rapide aussi
+        warm_launch(shutil.which("chromium") or shutil.which("chromium-browser") or shutil.which("google-chrome"))
     try:
         ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
     except OSError as e:
