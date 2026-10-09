@@ -9,5 +9,5 @@ window.CONFIG = {
   PICK_COUNT: 4,          // nombre de résultats tirés parmi les 8 réponses
   IDLE_TIMEOUT_S: 60,     // retour à l'accueil si personne ne touche l'écran
   RESULT_SCREEN_S: 30,    // durée de l'écran final avant retour à l'accueil
-  HIDE_CURSOR: false,     // true sur la borne tactile
+  HIDE_CURSOR: true,      // curseur masqué sur la borne ; false pour travailler à la souris
 };
