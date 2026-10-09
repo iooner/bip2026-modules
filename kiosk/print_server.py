@@ -143,7 +143,7 @@ def print_label(html):
             f.write(html)
         if os.path.exists(pdf):
             os.remove(pdf)
-        subprocess.run([exe, "--headless=new", "--no-pdf-header-footer", "--disable-gpu", "--no-first-run",
+        subprocess.run([exe, "--headless=new", "--no-pdf-header-footer", "--disable-gpu", "--no-first-run", "--password-store=basic",
                         f"--user-data-dir={DIR}/profil", f"--print-to-pdf={pdf}", "file://" + src],
                        timeout=60, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if not os.path.exists(pdf):
