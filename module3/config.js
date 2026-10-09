@@ -54,5 +54,5 @@ window.CONFIG = {
   SCAN_S: 4,              // durée de l'animation de scan
   RESULT_SCREEN_S: 15,    // durée de l'écran « autorisé » avant retour à l'accueil
   IDLE_TIMEOUT_S: 60,     // retour à l'accueil si rien ne se passe
-  HIDE_CURSOR: false,     // true sur la borne tactile
+  HIDE_CURSOR: true,      // curseur masqué sur la borne ; false pour travailler à la souris
 };
