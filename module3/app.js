@@ -10,7 +10,9 @@
                   "Récupère tes affaires et remets le bac au début du scanner."],
           waiting: "Le scanner attend ton bac…",
           wait: { partial: "Bac mal placé.\nGlisse-le en entier sous la caméra.", moving: "Lâche le bac, ne le touche plus…",
-                  hold: "Bac en place, ne bouge plus…", done: "Ce bac est déjà scanné.\nAu suivant !" },
+                  hold: "Bac en place, ne bouge plus…", done: "Ce bac est déjà scanné.\nAu suivant !",
+                  empty: "Ton bac est vide.\nMets-y tes affaires, puis lâche-le.",
+                  nocam: "Scanner en panne.\nPréviens l’équipe de l’expo." },
           simulate: "Simuler un passage",
           scanning: "Analyse en cours…", stamp: "AUTORISÉ", clear: "Bonne visite !", xray: 'RAYONS <i class="xmark">✕</i>', restart: "Recommencer", home: "Retour à l’accueil", locale: "fr-BE",
           printing: "Colle ton étiquette dans ton passeport. N’oublie pas de récupérer tes affaires et de remettre le bac au début du scanner !",
@@ -24,7 +26,9 @@
                   "Collect your belongings and put the tray back at the start of the scanner."],
           waiting: "The scanner is waiting for your tray…",
           wait: { partial: "Tray not fully in view.\nSlide it all the way in.", moving: "Let go of the tray…",
-                  hold: "Tray in place, hold still…", done: "This tray has already been scanned.\nNext one!" },
+                  hold: "Tray in place, hold still…", done: "This tray has already been scanned.\nNext one!",
+                  empty: "Your tray is empty.\nPut your things in it, then let go.",
+                  nocam: "Scanner out of order.\nPlease tell the exhibition team." },
           simulate: "Simulate a pass",
           scanning: "Scanning…", stamp: "CLEAR", clear: "Enjoy the exhibition!", xray: '<i class="xmark">✕</i>-RAY', restart: "Start again", home: "Back to start", locale: "en-GB",
           printing: "Stick your label in your passport. Don’t forget to collect your belongings and put the tray back at the start of the scanner!",
@@ -99,17 +103,28 @@
   }
 
   // Vue de réglage (helper en mode webcam) : appui de 5 s sur le ✕ de l'accueil, comme au module 4.
-  // Grande image en direct avec l'état du suivi du bac ; un appui dessus la ferme.
+  // Grande image en direct avec l'état du suivi du bac. « Apprendre ce bac » règle la détection sur la couleur
+  // de la bordure du bac posé sous la caméra (nouveau bac, autre éclairage) ; le cadre vert doit le suivre ensuite.
   const debug = $("#debug"), hiddenBtn = $("#welcome .xbox");
   let pressTimer;
   const setDebug = on => {
     debug.hidden = !on;
-    if (on) debug.src = C.HELPER_URL + "/live.mjpg?debug&" + Date.now(); else debug.removeAttribute("src");
+    $("#debug .msg").textContent = "";
+    if (on) $("#debug img").src = C.HELPER_URL + "/live.mjpg?debug&" + Date.now(); else $("#debug img").removeAttribute("src");
   };
   hiddenBtn.addEventListener("pointerdown", () => { pressTimer = setTimeout(() => SIM || setDebug(true), 5000); });
   for (const e of ["pointerup", "pointerleave", "pointercancel"]) hiddenBtn.addEventListener(e, () => clearTimeout(pressTimer));
-  debug.addEventListener("pointerdown", () => setDebug(false));
-  debug.onerror = () => setDebug(false);
+  $("#debug img").onerror = () => { $("#debug .msg").textContent = "Pas d’image : helper sans webcam, ou injoignable."; };
+  $("#debug .bar").addEventListener("click", async e => {
+    const what = e.target.dataset.do;
+    if (what === "close") return setDebug(false);
+    if (!what) return;
+    $("#debug .msg").textContent = "…";
+    try {
+      const r = await (await fetch(C.HELPER_URL + "/" + what, { method: "POST" })).json();
+      $("#debug .msg").textContent = (r.ok ? "✓ " : "✕ ") + r.message;
+    } catch (err) { $("#debug .msg").textContent = "✕ helper injoignable"; }
+  });
 
   function show(id) {
     state = id;
@@ -181,7 +196,15 @@
       // Toujours absent après 15 s : bandeau « en panne » sur l'accueil
       downTimer = downTimer || setTimeout(() => KioskStatus.report("scanner", "helper du scanner injoignable (" + C.HELPER_URL + ") : capteur et caméra hors service"), 15000);
     });
-    es.addEventListener("state", e => { waitCode = JSON.parse(e.data).code; renderWait(); });
+    es.addEventListener("state", e => {
+      waitCode = JSON.parse(e.data).code; renderWait();
+      // webcam débranchée ou illisible : bandeau « en panne » sur l'accueil, levé dès qu'elle revient
+      // (le bandeau ne s'affiche que sur l'accueil : on y ramène un visiteur resté sur les consignes)
+      if (waitCode === "nocam") {
+        KioskStatus.report("camera", "webcam du scanner débranchée ou illisible");
+        if (state === "steps") reset();
+      } else KioskStatus.clear("camera");
+    });
     es.addEventListener("trigger", onTrigger);
     es.addEventListener("photo", e => onPhoto(C.HELPER_URL + JSON.parse(e.data).url));
     es.addEventListener("failed", e => { console.warn("Capture :", e.data); onPhoto(null); });
@@ -234,28 +257,42 @@
 
   // Dessine la photo recadrée/tournée dans un canvas, avec un filtre SVG.
   function render(img, canvas, filter, lines) {
-    const ctx = canvas.getContext("2d"), cw = canvas.width, ch = canvas.height;
+    const ctx = canvas.getContext("2d");
     const c = C.CROP || {}, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
     const sx = iw * (c.left || 0), sy = ih * (c.top || 0);
     const sw = iw * (1 - (c.left || 0) - (c.right || 0)), sh = ih * (1 - (c.top || 0) - (c.bottom || 0));
     const rot = ((C.ROTATE || 0) % 360 + 360) % 360, side = rot === 90 || rot === 270;
-    const dw = side ? ch : cw, dh = side ? cw : ch;
-    const k = Math.max(dw / sw, dh / sh);    // remplit le cadre (object-fit: cover)
+    // FIT "contain" (défaut) : le cadre prend la forme de la photo du bac, qui est donc montrée en entier, sans
+    // bandes (à l'écran, le moniteur garde son fond sombre autour ; sur l'étiquette, la photo prend sa hauteur).
+    // "cover" : cadre 4:3 rempli, ce qui dépasse est rogné.
+    const cover = (C.FIT ?? "contain") === "cover";
+    const maxW = +(canvas.dataset.w ||= canvas.width), maxH = +(canvas.dataset.h ||= canvas.height);
+    const ar = side ? sh / sw : sw / sh;
+    canvas.width = cover || ar >= maxW / maxH ? maxW : Math.round(maxH * ar);
+    canvas.height = cover || ar < maxW / maxH ? maxH : Math.round(maxW / ar);
+    canvas.style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+    const cw = canvas.width, ch = canvas.height, dw = side ? ch : cw, dh = side ? cw : ch;
+    const k = Math.max(dw / sw, dh / sh);
     const draw = f => {
       ctx.save();
+      ctx.filter = f ? `url(#${f})` : "none";
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cw, ch);
       ctx.translate(cw / 2, ch / 2);
       ctx.rotate(rot * Math.PI / 180);
       if (C.MIRROR) ctx.scale(-1, 1);
-      ctx.filter = f ? `url(#${f})` : "none";
       ctx.drawImage(img, sx, sy, sw, sh, -sw * k / 2, -sh * k / 2, sw * k, sh * k);
       ctx.restore();
     };
     // Écran : rendu « rayons X » calculé pixel par pixel ; à défaut (SCAN_STYLE: "filtre",
     // ou image d'exemple illisible par le canvas), simple filtre de couleur.
+    // Étiquette (PRINT_STYLE) : "rx" = un des rendus rayons X passé en noir et blanc (PRINT_RX), "net" = fond
+    // blanchi et objets sombres, "filtre" = simple photo en gris.
     const style = C.SCAN_STYLE ?? "neon", rx = filter === "f-xray" && style !== "filtre";
-    draw(rx ? null : filter);
-    if (rx && !xray(canvas, style)) draw(filter);
+    const pstyle = filter === "f-print" ? C.PRINT_STYLE ?? "rx" : "", prx = pstyle === "rx";
+    const net = pstyle === "net" || pstyle === "trait";
+    draw(rx || net || prx ? null : filter);
+    if (rx && !xray(canvas, style) || net && !printTone(canvas, pstyle === "trait") ||
+        prx && !(xray(canvas, C.PRINT_RX ?? "neon") && gray(canvas, C.PRINT_NEGATIVE ?? true))) draw(filter);
     if (lines) {                              // fines lignes de balayage
       ctx.fillStyle = lines;
       for (let y = 0; y < ch; y += 4) ctx.fillRect(0, y, cw, 1);
@@ -301,6 +338,66 @@
     for (let n = 0; n < 3; n++) { pass(a, b, h, w, w, 1); pass(b, a, w, h, 1, w); }
     return a;
   }
+  // Étiquette : le fond du bac devient blanc, les objets restent sombres avec un contour marqué. Une imprimante
+  // thermique ne sait faire que du noir ou du blanc : un fond gris y sort en trame sale.
+  // `outline` : seulement le contour des objets, en trait noir sur blanc (PRINT_STYLE "trait").
+  function printTone(canvas, outline) {
+    const ctx = canvas.getContext("2d"), w = canvas.width, h = canvas.height;
+    let im;
+    try { im = ctx.getImageData(0, 0, w, h); } catch (e) { return false; }   // image d'une autre origine
+    const p = im.data, n = w * h, L = new Float32Array(n), hist = new Uint32Array(256);
+    for (let i = 0; i < n; i++) {
+      L[i] = p[4 * i] * .299 + p[4 * i + 1] * .587 + p[4 * i + 2] * .114;
+      hist[L[i] | 0]++;
+    }
+    let bg = 255;                                                // fond du bac : voir xray()
+    for (let acc = 0; bg > 60 && (acc += hist[bg]) < n * .15; bg--);
+    // couleur du fond : moyenne des pixels proches de sa luminosité. Un objet aussi clair que le fond mais
+    // d'une autre couleur (ruban orange, carte colorée) doit ressortir aussi.
+    let br = 0, bgn = 0, bb = 0, m = 0;
+    for (let i = 0; i < n; i++) if (Math.abs(L[i] - bg) < 12) { br += p[4 * i]; bgn += p[4 * i + 1]; bb += p[4 * i + 2]; m++; }
+    br /= m || 1; bgn /= m || 1; bb /= m || 1;
+    const contrast = C.PRINT_CONTRAST ?? 1.6, bright = C.PRINT_BRIGHTNESS ?? .05, inv = C.SCAN_INVERT ?? false;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const far = Math.max(Math.abs(p[4 * i] - br), Math.abs(p[4 * i + 1] - bgn), Math.abs(p[4 * i + 2] - bb));
+      const lum = Math.min(1, L[i] / bg / .92, 1 - .8 * Math.min(1, Math.max(0, (far - 30) / 80)));
+      let t = outline ? 1 : Math.min(1, Math.max(0, (lum - .5) * contrast + .5 + bright));
+      if (x > 0 && y > 0 && x < w - 1 && y < h - 1) {            // contour (Sobel)
+        const gx = L[i - w + 1] + 2 * L[i + 1] + L[i + w + 1] - L[i - w - 1] - 2 * L[i - 1] - L[i + w - 1];
+        const gy = L[i + w - 1] + 2 * L[i + w] + L[i + w + 1] - L[i - w - 1] - 2 * L[i - w] - L[i - w + 1];
+        const e = Math.min(1, Math.hypot(gx, gy) / 220);
+        t *= outline ? 1 - Math.min(1, Math.max(0, e - .08) * 2.4) : 1 - e * .6;
+      }
+      p[4 * i] = p[4 * i + 1] = p[4 * i + 2] = (inv ? 1 - t : t) * 255;
+    }
+    ctx.putImageData(im, 0, 0);
+    return true;
+  }
+
+  // Passe un canvas en niveaux de gris (étiquette : l'imprimante thermique n'a pas de couleur)
+  // `negative` : inverse le résultat (un rendu à fond noir devient à fond blanc, bien moins chargé en noir)
+  function gray(canvas, negative) {
+    const ctx = canvas.getContext("2d"), im = ctx.getImageData(0, 0, canvas.width, canvas.height), p = im.data;
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < p.length; i += 4) {
+      const v = p[i] * .299 + p[i + 1] * .587 + p[i + 2] * .114;
+      hist[p[i] = p[i + 1] = p[i + 2] = negative ? 255 - v : v]++;
+    }
+    if (negative) {   // le fond (la valeur la plus fréquente) passe au blanc pur : pas de trame grise à l'impression
+      let bg = 255;
+      for (let v = 128; v < 256; v++) if (hist[v] > hist[bg]) bg = v;
+      // puis on renforce les noirs (PRINT_INK) : sur papier thermique, un gris clair sort en points épars
+      const k = 255 / Math.max(1, bg - 8), ink = C.PRINT_INK ?? 2;
+      for (let i = 0; i < p.length; i += 4) {
+        const dark = Math.min(1, Math.max(0, 1 - Math.min(255, p[i] * k) / 255 - .15) * ink);   // grain du fond retiré
+        p[i] = p[i + 1] = p[i + 2] = 255 * (1 - dark);
+      }
+    }
+    ctx.putImageData(im, 0, 0);
+    return true;
+  }
+
   function xray(canvas, style) {
     const ctx = canvas.getContext("2d"), w = canvas.width, h = canvas.height;
     let im;
@@ -339,7 +436,7 @@
   function runScan(img) {
     const id = scanId, t = UI[lang];
     render(img, $("#xray"), "f-xray", "rgba(255,255,255,.07)");
-    render(img, $(".l-img"), "f-print", "rgba(255,255,255,.35)");
+    render(img, $(".l-img"), "f-print", (C.PRINT_STYLE ?? "rx") === "rx" ? null : "rgba(255,255,255,.35)");
     const scan = $("#scan");
     scan.style.setProperty("--scan-s", C.SCAN_S + "s");
     scan.className = "screen active scanning";

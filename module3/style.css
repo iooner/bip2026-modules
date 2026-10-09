@@ -76,12 +76,21 @@ em { font-style: italic; }
   white-space: pre-line; }
 .simulate { height: 64px; padding: 0 28px; border: 3px dashed var(--pink); color: var(--pink); font-size: 20px; }
 #steps .live { flex: none; width: 288px; height: 162px; object-fit: cover; background: var(--navy); }
-#debug { position: fixed; inset: 0; z-index: 50; width: 100%; height: 100%; object-fit: contain; background: #000; }
+#debug { position: fixed; inset: 0; z-index: 50; background: #000; color: #fff; }
+#debug[hidden] { display: none; }
+#debug img { width: 100%; height: 100%; object-fit: contain; }
+#debug .bar { position: absolute; left: 0; right: 0; bottom: 3vh; display: flex; justify-content: center; gap: 2vw; }
+#debug .bar button { padding: 2.2vh 3vw; background: var(--pink); color: var(--navy); font-size: 3vh; font-weight: 500; }
+#debug .bar button:active { background: #fff; }
+#debug .msg { position: absolute; left: 0; right: 0; bottom: 13vh; text-align: center; font-size: 3vh; font-weight: 500;
+  text-shadow: 0 0 6px #000, 0 0 6px #000; }
 /* le bandeau prend la couleur de l'état : orange = on attend, vert = bac en place, rouge = à corriger */
 #steps footer { transition: background .25s, border-color .25s; }
-#steps footer:has(.waiting[data-code="absent"]), #steps footer:has(.waiting[data-code="moving"]) { background: #c9791a; border-color: #f0a030; }
+#steps footer:has(.waiting[data-code="absent"]), #steps footer:has(.waiting[data-code="moving"]),
+#steps footer:has(.waiting[data-code="empty"]) { background: #c9791a; border-color: #f0a030; }
 #steps footer:has(.waiting[data-code="hold"]) { background: #1c8f4d; border-color: #2bd46f; }
-#steps footer:has(.waiting[data-code="partial"]), #steps footer:has(.waiting[data-code="done"]) { background: #b93a30; border-color: #e0483c; }
+#steps footer:has(.waiting[data-code="partial"]), #steps footer:has(.waiting[data-code="done"]),
+#steps footer:has(.waiting[data-code="nocam"]) { background: #b93a30; border-color: #e0483c; }
 #steps .waiting .xbox { flex: none; font-style: normal; }   /* le ✕ encadré de l'expo à la place d'un voyant */
 .simulate:active { background: var(--pink); color: var(--navy); }
 
@@ -95,7 +104,7 @@ em { font-style: italic; }
 #scan .monitor { flex: none; width: 704px; display: flex; flex-direction: column; }
 #scan .view { position: relative; width: 704px; height: 528px; overflow: hidden; background: #0b0a1c;
   border: 3px solid var(--grey); }
-#xray { width: 100%; height: 100%; display: block; visibility: hidden; }
+#xray { width: 100%; height: 100%; object-fit: contain; display: block; visibility: hidden; }
 #scan .caption { margin-top: 12px; display: flex; justify-content: space-between; font-size: 16px;
   letter-spacing: .08em; color: var(--grey); font-variant-numeric: tabular-nums; }
 #scan .tag { color: var(--pink); display: inline-flex; align-items: center; gap: .35em; }
@@ -150,7 +159,7 @@ em { font-style: italic; }
 #label .l-x { display: inline-flex; align-items: center; justify-content: center; width: 5mm; height: 5mm;
   border: .4mm solid #000; font-size: 8pt; font-weight: 500; }
 #label .l-kicker { font-size: 6.5pt; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 1mm; }
-#label .l-img { width: 100%; aspect-ratio: 4 / 3; display: block; border: .3mm solid #000; }
+#label .l-img { width: 100%; aspect-ratio: 4 / 3; display: block; border: .3mm solid #000; }   /* forme réglée par app.js */
 #label .l-stamp { margin: 2.5mm auto 2mm; padding: .8mm 3mm 1.2mm; border: .7mm solid #000; text-align: center;
   transform: rotate(-4deg); }
 #label .l-stamp b { display: block; font-size: 17pt; font-weight: 500; line-height: 1.05; letter-spacing: .04em; }

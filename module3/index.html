@@ -78,8 +78,16 @@
   <canvas class="l-code" width="600" height="60"></canvas>
 </div>
 
-<!-- Vue de réglage de la caméra : appui de 5 s sur le ✕ de l'accueil, un appui pour fermer -->
-<img id="debug" alt="" hidden>
+<!-- Vue de réglage de la caméra : appui de 5 s sur le ✕ de l'accueil -->
+<div id="debug" hidden>
+  <img alt="">
+  <p class="msg"></p>
+  <div class="bar">
+    <button data-do="learn">Apprendre ce bac (vide)</button>
+    <button data-do="forget">Couleur d’origine</button>
+    <button data-do="close">Fermer</button>
+  </div>
+</div>
 
 <!-- Filtres « rayons X » appliqués à la photo (paramètres réglés par app.js) -->
 <svg width="0" height="0" style="position:absolute">
