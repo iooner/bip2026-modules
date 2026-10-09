@@ -1,4 +1,4 @@
-# Module 4 · Signature corporelle
+# Module 4 · Re-Kinect-Toi
 
 Choix de la langue → la personne se place sur la croix au sol (aperçu « miroir » de sa silhouette) →
 3, 2, 1 → 10 s pour bouger → ses mains, pieds et tête tracent une signature à l'encre (trait épais

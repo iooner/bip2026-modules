@@ -1,22 +1,22 @@
 (() => {
   const C = window.CONFIG, T = window.Tracker, S = window.Signature;
   const UI = {
-    fr: { stepPlace: "Signature corporelle", placeTitle: "Place-toi sur la croix au sol",
+    fr: { stepPlace: "Re-Kinect-Toi", placeTitle: "Place-toi sur la croix au sol",
           placeText: "Quand tu es en place, un décompte démarre : tu auras " + C.RECORD_S +
             " secondes pour bouger. Tes mains et tes pieds vont dessiner ta signature.",
           wait: "En attente de positionnement…", hold: "Position OK, ne bouge plus…", go: "Je suis prêt·e", replay: "Tes mouvements",
           ready: ["Prêt·e ?", "Bouge !"], move: "Bouge ! Danse, écarte les bras, saute…",
-          resultTitle: "Ta signature corporelle", done: "Terminé", restart: "Recommencer", no: "N°",
+          resultTitle: "Ta signature", done: "Terminé", restart: "Recommencer", no: "N°",
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
-          noprint: "Voici ta signature !", label: "Signature corporelle" },
-    en: { stepPlace: "Body signature", placeTitle: "Stand on the cross on the floor",
+          noprint: "Voici ta signature !", label: "Re-Kinect-Toi" },
+    en: { stepPlace: "Re-Kinect-Toi", placeTitle: "Stand on the cross on the floor",
           placeText: "Once you are in place, a countdown starts: you will have " + C.RECORD_S +
             " seconds to move. Your hands and feet will draw your signature.",
           wait: "Waiting for you to get in position…", hold: "In position, hold still…", go: "I’m ready", replay: "Your moves",
           ready: ["Ready?", "Move!"], move: "Move! Dance, spread your arms, jump…",
-          resultTitle: "Your body signature", done: "Done", restart: "Start again", no: "No.",
+          resultTitle: "Your signature", done: "Done", restart: "Start again", no: "No.",
           printing: "Your label is printing. Stick it in your passport!",
-          noprint: "Here is your signature!", label: "Body signature" },
+          noprint: "Here is your signature!", label: "Re-Kinect-Toi" },
   };
   const $ = (s, el = document) => el.querySelector(s);
   const stage = $("#stage");
