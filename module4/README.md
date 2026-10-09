@@ -38,7 +38,7 @@ Le pont suit la personne la plus proche du centre.
 python3 bridge/kinect_bridge.py --source freenect   # Kinect v1 via libfreenect : pas de squelette,
                                                     # tête/mains/pieds tirés de la silhouette en profondeur
 python3 bridge/kinect_bridge.py --source kinect     # Kinect v1 + vrai squelette (MediaPipe sur sa caméra couleur,
-                                                    # profondeur pour la zone et en repli) : PC type Core i5
+                                                    # profondeur pour la distance et la zone) : PC type Core i5
 python3 bridge/kinect_bridge.py --source webcam     # webcam + MediaPipe
 python3 bridge/kinect_bridge.py --source fake       # test sans matériel
 ```
@@ -55,7 +55,7 @@ curl -fL -o ~/.cache/bip2026/pose_landmarker_full.task \
   https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task
 ./module4/bridge/start.sh kinect
 ```
-La caméra couleur a besoin de lumière sur la personne ; dans le noir, le pont retombe sur la silhouette en profondeur
-(décor vide à réapprendre sur place : F9). Mesuré sur un Optiplex XE2 (i5-4570S) : 29 images/s, un cœur sur quatre occupé.
+La caméra couleur a besoin de lumière sur la personne (dans le noir : source `freenect`). `--tilt 0` met la Kinect à
+l'horizontale avec son moteur ; `--debug-dir DOSSIER` y dépose une image annotée par seconde. Le pont journalise sa cadence.
 
 **Non testé sur le matériel** : le pont Windows est compilé ici contre une maquette du SDK, pas avec une vraie Kinect.

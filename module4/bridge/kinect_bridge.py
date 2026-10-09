@@ -9,8 +9,8 @@ Sources :
   freenect  Kinect v1 (Xbox 360) via libfreenect, sans squelette : on segmente la personne dans
             l'image de profondeur et on prend les extrémités de la silhouette (tête, mains, pieds).
             Fonctionne sur Raspberry Pi.
-  kinect    Kinect v1 avec vrai squelette : MediaPipe Pose sur sa caméra couleur, la profondeur sert à
-            écarter les passants hors zone et prend le relais (silhouette) si la pose est perdue.
+  kinect    Kinect v1 avec vrai squelette : MediaPipe Pose sur sa caméra couleur, la profondeur donne la
+            distance et écarte ce qui est hors zone (--near / --far).
             Demande un vrai processeur (Core i5 : oui ; Celeron N3150 : non).
   webcam    n'importe quelle webcam + MediaPipe Pose.
   fake      danseur synthétique, pour tester sans matériel.
@@ -259,7 +259,7 @@ class Pose:
             raise SystemExit(f"Modèle de pose absent : {path} (voir module4/README.md)")
         self.mp, self.mirror, self.vis, self.t0, self.last = mp, not a.no_mirror, a.pose_visibility, time.time(), 0
         self.lm = vision.PoseLandmarker.create_from_options(vision.PoseLandmarkerOptions(
-            base_options=BaseOptions(model_asset_path=path), running_mode=vision.RunningMode.VIDEO, num_poses=3))
+            base_options=BaseOptions(model_asset_path=path), running_mode=vision.RunningMode.VIDEO, num_poses=a.poses))
 
     def bodies(self, rgb):
         """Liste de (corps, [x, y] du milieu du torse non miroir) pour chaque personne vue."""
@@ -295,20 +295,78 @@ class Webcam:
 
 
 class Kinect(Freenect):
-    """Kinect v1 : squelette MediaPipe sur l'image couleur, profondeur en appui (zone, repli silhouette)."""
+    """Kinect v1 : squelette MediaPipe sur l'image couleur ; la profondeur donne la distance et écarte ce qui
+    est hors zone. Une tâche à part lit la Kinect en continu : la pose travaille toujours sur l'image la plus
+    récente (pas de retard qui s'accumule quand la pose prend plus d'une image)."""
+    HOLD = 6                                                    # images pendant lesquelles on garde un corps perdu
 
     def __init__(self, a):
         super().__init__(a)
         if not hasattr(self, "video"):
             raise SystemExit("Source kinect : libfreenect_sync requis")
-        self.pose, self.miss = Pose(a), 0
+        import threading
+        self.pose, self.miss, self.kept = Pose(a), 0, None
+        self.n = dict(img=0, pose=0, rest=0, t=time.time(), ms=0.0, shot=0)
+        self.cv, self.frame, self.seq, self.done, self.err = threading.Condition(), None, 0, 0, None
+        if a.tilt is not None:
+            self.tilt(a.tilt)
+        threading.Thread(target=self.capture, daemon=True).start()
+
+    def tilt(self, deg):
+        """Incline la Kinect avec son moteur (degrés, 0 = à l'horizontale, de -27 à 27)."""
+        import ctypes
+        ctypes.CDLL("libfreenect_sync.so.0.5").freenect_sync_set_tilt_degs(int(max(-27, min(27, deg))), 0)
+
+    def capture(self):
+        try:
+            while True:
+                rgb = self.video()
+                d = self.depth()[::4, ::4].astype(np.float32)
+                with self.cv:
+                    self.frame, self.seq = (rgb, d), self.seq + 1
+                    self.cv.notify()
+        except Exception as e:                                  # Kinect débranchée : read() le signale au pont
+            with self.cv:
+                self.err = e
+                self.cv.notify()
+
+    def stats(self, body, rgb, dt):
+        """Journal toutes les 5 s (cadence, durée de la pose, mains perdues) et, avec --debug-dir, une image
+        couleur annotée par seconde."""
+        n = self.n
+        n["img"] += 1; n["ms"] += dt * 1000
+        if body:
+            n["pose"] += 1; n["rest"] += len(body.get("rest", ()))
+        if self.a.debug_dir and time.time() - n["shot"] > 1 and (body or self.miss < 30):
+            import cv2
+            out = os.path.expanduser(self.a.debug_dir)
+            os.makedirs(out, exist_ok=True)
+            img = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+            for k, q in (body or {}).get("joints", {}).items():
+                x = (1 - q[0]) if self.mirror else q[0]
+                cv2.circle(img, (int(x * 639), int(q[1] * 479)), 5, (0, 0, 255) if k in body["rest"] else (0, 255, 0), -1)
+            cv2.imwrite(os.path.join(out, time.strftime("%H%M%S") + ("-pose.jpg" if body else "-rien.jpg")), img)
+            n["shot"] = time.time()
+        el = time.time() - n["t"]
+        if el >= 5:
+            if n["pose"]:
+                print(time.strftime("%H:%M:%S"), f"{n['img'] / el:.1f} img/s, pose {n['ms'] / n['img']:.0f} ms, "
+                      f"squelette {n['pose']}/{n['img']}, mains perdues {n['rest']}", flush=True)
+            n.update(img=0, pose=0, rest=0, t=time.time(), ms=0.0)
 
     def read(self):
-        rgb = self.video()
-        sil = super().read()                                    # lit la profondeur, entretient le décor appris
-        d, best = self.d, None
+        with self.cv:
+            if not self.cv.wait_for(lambda: self.seq != self.done or self.err, 4):
+                raise RuntimeError("Kinect muette")
+            if self.err:
+                raise self.err
+            (rgb, d), self.done = self.frame, self.seq
+        t = time.time()
+        found = self.pose.bodies(rgb)
+        dt = time.time() - t
         h, w = d.shape
-        for body, (tx, ty) in self.pose.bodies(rgb):
+        best = None
+        for body, (tx, ty) in found:
             # Distance du torse (les deux caméras de la Kinect sont alignées à quelques pixels près)
             x, y = int(min(max(tx, 0), 1) * (w - 1)), int(min(max(ty, 0), 1) * (h - 1))
             patch = d[max(0, y - 6):y + 7, max(0, x - 5):x + 6]
@@ -319,13 +377,16 @@ class Kinect(Freenect):
                 body["z"] = round(z / 1000, 2)
             if best is None or abs(tx - 0.5) < best[1]:
                 best = (body, abs(tx - 0.5))
+        self.stats(best and best[0], rgb, dt)
         if best:
-            self.miss, self.st = 0, {}
+            self.miss, self.kept = 0, best[0]
             return [best[0]]
-        # Pose perdue (personne de dos, trop sombre…) : la silhouette en profondeur prend le relais,
-        # après quelques images pour ne pas alterner entre les deux à chaque hésitation.
+        # Pose perdue un instant : on garde le dernier corps quelques images plutôt que de faire clignoter la page
         self.miss += 1
-        return sil if self.a.pose_fallback and self.miss > 5 else []
+        if self.kept and self.miss <= self.HOLD:
+            return [dict(self.kept, joints=dict(self.kept["joints"]), rest=["handL", "handR"])]
+        self.kept = None
+        return []
 
 
 # ---------- Danseur synthétique ----------
@@ -419,8 +480,9 @@ if __name__ == "__main__":
     ap.add_argument("--camera", type=int, default=0, help="index webcam (source webcam)")
     ap.add_argument("--pose-model", default="~/.cache/bip2026/pose_landmarker_full.task",
                     help="modèle MediaPipe Pose (sources kinect et webcam)")
-    ap.add_argument("--pose-visibility", type=float, default=0.5, help="confiance mini d'une main ou d'un pied (0..1)")
-    ap.add_argument("--no-pose-fallback", dest="pose_fallback", action="store_false",
-                    help="source kinect : pas de repli sur la silhouette quand la pose est perdue")
+    ap.add_argument("--pose-visibility", type=float, default=0.3, help="confiance mini d'une main ou d'un pied (0..1)")
+    ap.add_argument("--poses", type=int, default=1, help="personnes cherchées par image (plus = plus lent)")
+    ap.add_argument("--tilt", type=float, help="source kinect : incline la Kinect au lancement (degrés, 0 = horizontale)")
+    ap.add_argument("--debug-dir", default="", help="source kinect : une image couleur annotée par seconde dans ce dossier")
     ap.add_argument("--no-mirror", action="store_true")
     asyncio.run(main(ap.parse_args()))
