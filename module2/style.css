@@ -57,7 +57,6 @@ em { font-style: italic; }
 #welcome .cams i.ok { background: #2fa84f; }
 #welcome .cams i.down { background: #d92b2b; }
 
-#welcome h1.big { font-size: 96px; letter-spacing: -.02em; }
 
 /* Prise de vue */
 #shoot { background: linear-gradient(to bottom, var(--mauve), var(--pink)); color: #fff;

@@ -1,4 +1,4 @@
-// Réglages du module 2 (360°). Modifier ici, puis recharger la page.
+// Réglages du module 2 (Des yeux derrière la tête). Modifier ici, puis recharger la page.
 // Les adresses des caméras sont dans cameras.json (lu par server.py, pas par le navigateur).
 window.CONFIG = {
   // Étiquette Dymo S0947420 (LabelWriter 4XL/5XL) : 59 × 102 mm, portrait.
