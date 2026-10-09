@@ -6,21 +6,29 @@
     fr: { kicker: "Contrôle de sûreté", title: "Vide ton sac !",
           steps: ["Vide tes poches ou ton sac dans le bac.",
                   "Glisse le bac dans le scanner.",
-                  "Attends le verdict à l’écran."],
-          waiting: "Le scanner attend ton bac…", simulate: "Simuler un passage",
-          scanning: "Analyse en cours…", stamp: "AUTORISÉ", clear: "Bonne visite !", xray: "RAYONS X", restart: "Recommencer", locale: "fr-BE",
-          printing: "Ton étiquette s’imprime : colle-la dans ton passeport. N’oublie pas tes affaires !",
-          noprint: "N’oublie pas tes affaires !",
+                  "Attends le verdict à l’écran.",
+                  "Récupère tes affaires et remets le bac au début du scanner."],
+          waiting: "Le scanner attend ton bac…",
+          wait: { partial: "Bac mal placé.\nGlisse-le en entier sous la caméra.", moving: "Lâche le bac, ne le touche plus…",
+                  hold: "Bac en place, ne bouge plus…", done: "Ce bac est déjà scanné.\nAu suivant !" },
+          simulate: "Simuler un passage",
+          scanning: "Analyse en cours…", stamp: "AUTORISÉ", clear: "Bonne visite !", xray: 'RAYONS <i class="xmark">✕</i>', restart: "Recommencer", home: "Retour à l’accueil", locale: "fr-BE",
+          printing: "Colle ton étiquette dans ton passeport. N’oublie pas de récupérer tes affaires et de remettre le bac au début du scanner !",
+          noprint: "N’oublie pas de récupérer tes affaires et de remettre le bac au début du scanner !",
           label: "Vide ton sac", info: ["Passager", "Date", "Heure", "Porte"],
           agent: ["Agent", "Sarah Sûre"] },
     en: { kicker: "Security check", title: "Empty your bag!",
           steps: ["Empty your pockets or your bag into the tray.",
                   "Slide the tray into the scanner.",
-                  "Wait for the verdict on screen."],
-          waiting: "The scanner is waiting for your tray…", simulate: "Simulate a pass",
-          scanning: "Scanning…", stamp: "CLEAR", clear: "Enjoy the exhibition!", xray: "X-RAY", restart: "Start again", locale: "en-GB",
-          printing: "Your label is printing: stick it in your passport. Don’t forget your belongings!",
-          noprint: "Don’t forget your belongings!",
+                  "Wait for the verdict on screen.",
+                  "Collect your belongings and put the tray back at the start of the scanner."],
+          waiting: "The scanner is waiting for your tray…",
+          wait: { partial: "Tray not fully in view.\nSlide it all the way in.", moving: "Let go of the tray…",
+                  hold: "Tray in place, hold still…", done: "This tray has already been scanned.\nNext one!" },
+          simulate: "Simulate a pass",
+          scanning: "Scanning…", stamp: "CLEAR", clear: "Enjoy the exhibition!", xray: '<i class="xmark">✕</i>-RAY', restart: "Start again", home: "Back to start", locale: "en-GB",
+          printing: "Stick your label in your passport. Don’t forget to collect your belongings and put the tray back at the start of the scanner!",
+          noprint: "Don’t forget to collect your belongings and put the tray back at the start of the scanner!",
           label: "Empty your bag", info: ["Passenger", "Date", "Time", "Gate"],
           agent: ["Agent", "Justin Case"] },
   };
@@ -78,8 +86,32 @@
   tone("f-xray", C.SCAN_CONTRAST ?? 1.3, C.SCAN_BRIGHTNESS ?? 0, C.SCAN_INVERT ?? false);
   tone("f-print", C.PRINT_CONTRAST ?? 1.6, C.PRINT_BRIGHTNESS ?? 0.05, C.SCAN_INVERT ?? false);
 
+  // Vue en direct de la caméra sur l'écran des consignes (helper en mode webcam) : le visiteur voit
+  // son bac se placer, cadre vert quand il est bien dans le champ. Flux coupé hors de cet écran.
+  const live = $("#steps .live");
+  live.onerror = () => { live.hidden = true; };       // helper sans webcam (Pi) ou injoignable
+  function setLive(on) {
+    if (SIM || C.LIVE_PREVIEW === false) return;
+    live.hidden = !on;
+    if (on) live.src = C.HELPER_URL + "/live.mjpg?" + Date.now(); else live.removeAttribute("src");
+  }
+
+  // Vue de réglage (helper en mode webcam) : appui de 5 s sur le ✕ de l'accueil, comme au module 4.
+  // Grande image en direct avec l'état du suivi du bac ; un appui dessus la ferme.
+  const debug = $("#debug"), hiddenBtn = $("#welcome .xbox");
+  let pressTimer;
+  const setDebug = on => {
+    debug.hidden = !on;
+    if (on) debug.src = C.HELPER_URL + "/live.mjpg?debug&" + Date.now(); else debug.removeAttribute("src");
+  };
+  hiddenBtn.addEventListener("pointerdown", () => { pressTimer = setTimeout(() => SIM || setDebug(true), 5000); });
+  for (const e of ["pointerup", "pointerleave", "pointercancel"]) hiddenBtn.addEventListener(e, () => clearTimeout(pressTimer));
+  debug.addEventListener("pointerdown", () => setDebug(false));
+  debug.onerror = () => setDebug(false);
+
   function show(id) {
     state = id;
+    setLive(id === "steps");
     document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
     clearTimeout(idleTimer);
     if (id !== "welcome") idleTimer = setTimeout(reset, C.IDLE_TIMEOUT_S * 1000);
@@ -93,12 +125,29 @@
   }
 
   // --- Accueil et consignes ---
+  // Pictogrammes des consignes, un par étape : vider dans le bac, glisser dans le scanner, verdict à l'écran,
+  // reprendre ses affaires et rapporter le bac.
+  const ICONS = [
+    '<path d="M10 40h44l-6 14H16z"/><path d="M32 6v24M23 21l9 9 9-9"/>',
+    '<path d="M26 54V12h32v42M20 54h42M26 30h32M37 16l10 10M47 16l-10 10"/><path d="M2 43h20M15 36l7 7-7 7"/>',
+    '<rect x="8" y="10" width="48" height="34"/><path d="M24 54h16M32 44v10M22 27l7 7 13-14"/>',
+    '<path d="M10 40h44l-6 14H16z"/><path d="M46 30V21a9 9 0 0 0-9-9H18M25 5l-7 7 7 7"/>',
+  ];
+
+  // Écran des consignes : ce que le scanner attend (état du suivi du bac envoyé par le helper en mode webcam)
+  let waitCode = "absent";
+  function renderWait() {
+    $("#steps .waiting span").textContent = UI[lang].wait[waitCode] || UI[lang].waiting;
+    $("#steps .waiting").dataset.code = waitCode;
+  }
+
   function renderSteps() {
     const t = UI[lang];
     $("#steps .kicker").textContent = t.kicker;
     $("#steps .title").textContent = t.title;
-    $("#steps .list").innerHTML = t.steps.map((s, i) => `<li><b>${i + 1}</b><span>${s}</span></li>`).join("");
-    $("#steps .waiting span").textContent = t.waiting;
+    $("#steps .list").innerHTML = t.steps.map((s, i) =>
+      `<li><svg class="ico" viewBox="0 0 64 64">${ICONS[i] || ""}</svg><b>${i + 1}</b><span>${s}</span></li>`).join("");
+    renderWait();
     const sim = $("#steps .simulate");
     sim.textContent = t.simulate; sim.hidden = !SIM;
     $("#steps .restart").setAttribute("aria-label", t.restart);
@@ -108,6 +157,7 @@
     renderSteps(); show("steps");
   }));
   $(".restart").addEventListener("click", reset);
+  $("#scan .home").addEventListener("click", reset);    // écran « autorisé » : retour immédiat à l'accueil
   $("#steps .simulate").addEventListener("click", () => manualTrigger());
   addEventListener("keydown", e => {
     if (e.code === "Space" || e.key === "s") { e.preventDefault(); manualTrigger(); }
@@ -129,6 +179,7 @@
       // Toujours absent après 15 s : bandeau « en panne » sur l'accueil
       downTimer = downTimer || setTimeout(() => KioskStatus.report("scanner", "helper du scanner injoignable (" + C.HELPER_URL + ") : capteur et caméra hors service"), 15000);
     });
+    es.addEventListener("state", e => { waitCode = JSON.parse(e.data).code; renderWait(); });
     es.addEventListener("trigger", onTrigger);
     es.addEventListener("photo", e => onPhoto(C.HELPER_URL + JSON.parse(e.data).url));
     es.addEventListener("failed", e => { console.warn("Capture :", e.data); onPhoto(null); });
@@ -150,9 +201,10 @@
     $("#scan .status span").textContent = t.scanning;
     $("#scan .stamp b").textContent = t.stamp;
     $("#scan .stamp span").textContent = t.clear;
-    $("#scan .tag").textContent = t.xray;
+    $("#scan .tag").innerHTML = t.xray;     // le X est le ✕ encadré de l'expo (clin d'œil)
     $(".l-stamp b").textContent = "✓ " + t.stamp;
     $("#scan .printing").textContent = "";
+    $("#scan .home").textContent = t.home;
     $(".l-title").textContent = t.label;
     $(".l-kicker").textContent = t.kicker;
     $(".l-stamp span").textContent = t.clear;
@@ -187,18 +239,99 @@
     const rot = ((C.ROTATE || 0) % 360 + 360) % 360, side = rot === 90 || rot === 270;
     const dw = side ? ch : cw, dh = side ? cw : ch;
     const k = Math.max(dw / sw, dh / sh);    // remplit le cadre (object-fit: cover)
-    ctx.save();
-    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cw, ch);
-    ctx.translate(cw / 2, ch / 2);
-    ctx.rotate(rot * Math.PI / 180);
-    if (C.MIRROR) ctx.scale(-1, 1);
-    ctx.filter = `url(#${filter})`;
-    ctx.drawImage(img, sx, sy, sw, sh, -sw * k / 2, -sh * k / 2, sw * k, sh * k);
-    ctx.restore();
+    const draw = f => {
+      ctx.save();
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cw, ch);
+      ctx.translate(cw / 2, ch / 2);
+      ctx.rotate(rot * Math.PI / 180);
+      if (C.MIRROR) ctx.scale(-1, 1);
+      ctx.filter = f ? `url(#${f})` : "none";
+      ctx.drawImage(img, sx, sy, sw, sh, -sw * k / 2, -sh * k / 2, sw * k, sh * k);
+      ctx.restore();
+    };
+    // Écran : rendu « rayons X » calculé pixel par pixel ; à défaut (SCAN_STYLE: "filtre",
+    // ou image d'exemple illisible par le canvas), simple filtre de couleur.
+    const style = C.SCAN_STYLE ?? "neon", rx = filter === "f-xray" && style !== "filtre";
+    draw(rx ? null : filter);
+    if (rx && !xray(canvas, style)) draw(filter);
     if (lines) {                              // fines lignes de balayage
       ctx.fillStyle = lines;
       for (let y = 0; y < ch; y += 4) ctx.fillRect(0, y, cw, 1);
     }
+  }
+
+  // Rendus « rayons X » calculés pixel par pixel (SCAN_STYLE). Le fond du bac sert de référence « vide » ;
+  // plus un objet est sombre, plus il est « dense ». Chaque style : palette selon la densité + contours.
+  const ramp = (pal, v, out) => {
+    const n = pal.length - 1, f = Math.min(1, Math.max(0, v)) * n, a = Math.min(n - 1, f | 0), u = f - a;
+    for (let c = 0; c < 3; c++) out[c] = pal[a][c] + (pal[a + 1][c] - pal[a][c]) * u;
+  };
+  const SCANNER = [[20, 18, 51], [46, 94, 173], [79, 163, 107], [227, 153, 69], [247, 237, 214], [255, 255, 250]];
+  const STYLES = {
+    // scanner d'aéroport : fond blanc, léger = orange, moyen = vert, dense = bleu
+    aeroport: (d, e, g, o) => { ramp(SCANNER, 1 - d, o); const k = 1 - e; o[0] *= k; o[1] *= k; o[2] *= k; },
+    // radiographie : fond noir, objets blanc bleuté avec une lueur
+    radio: (d, e, g, o) => {
+      ramp([[4, 6, 14], [20, 45, 80], [90, 150, 190], [215, 235, 245], [255, 255, 255]], d * 1.1 + .25 * g, o);
+      o[0] += e * 130; o[1] += e * 130; o[2] += e * 130;
+    },
+    // scanner sur fond noir
+    noir: (d, e, g, o) => {
+      ramp([[6, 6, 16], [230, 150, 60], [240, 190, 70], [80, 180, 110], [60, 120, 230], [150, 200, 255]], d, o);
+      const k = 1 - e * .7; o[0] *= k; o[1] *= k; o[2] *= k;
+    },
+    // contours lumineux roses sur bleu nuit (couleurs de l'expo)
+    neon: (d, e, g, o) => {
+      o[0] = 35 + d * 60 + e * 350 + g * 196; o[1] = 31 + d * 50 + e * 286 + g * 150; o[2] = 61 + d * 90 + e * 283 + g * 179;
+    },
+  };
+  // Flou rapide : 3 passes de moyenne glissante, horizontale puis verticale
+  function blur(src, w, h, r) {
+    const a = Float32Array.from(src), b = new Float32Array(w * h), k = 2 * r + 1;
+    const pass = (from, to, lines, len, line, step) => {
+      for (let j = 0; j < lines; j++) {
+        const o = j * line, at = i => from[o + Math.min(len - 1, Math.max(0, i)) * step];
+        let acc = 0;
+        for (let i = -r; i <= r; i++) acc += at(i);
+        for (let i = 0; i < len; i++) { to[o + i * step] = acc / k; acc += at(i + r + 1) - at(i - r); }
+      }
+    };
+    for (let n = 0; n < 3; n++) { pass(a, b, h, w, w, 1); pass(b, a, w, h, 1, w); }
+    return a;
+  }
+  function xray(canvas, style) {
+    const ctx = canvas.getContext("2d"), w = canvas.width, h = canvas.height;
+    let im;
+    try { im = ctx.getImageData(0, 0, w, h); } catch (e) { return false; }   // image d'une autre origine
+    const p = im.data, n = w * h, L = new Float32Array(n), hist = new Uint32Array(256);
+    for (let i = 0; i < n; i++) {
+      L[i] = p[4 * i] * .299 + p[4 * i + 1] * .587 + p[4 * i + 2] * .114;
+      hist[L[i] | 0]++;
+    }
+    // Fond du bac : la luminosité dépassée par seulement 15 % de l'image ; c'est le « vide »
+    let bg = 255;
+    for (let acc = 0; bg > 60 && (acc += hist[bg]) < n * .15; bg--);
+    const contrast = C.SCAN_CONTRAST ?? 1.3, bright = C.SCAN_BRIGHTNESS ?? 0, inv = C.SCAN_INVERT ?? false;
+    const edges = C.SCAN_EDGES ?? .7, D = new Float32Array(n), E = new Float32Array(n);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const t = Math.min(1, Math.max(0, (Math.min(1, L[i] / bg / .92) - .5) * contrast + .5 + bright));
+      D[i] = inv ? t : 1 - t;                                    // densité : 0 = vide, 1 = opaque
+      if (x > 0 && y > 0 && x < w - 1 && y < h - 1) {            // contour (Sobel)
+        const gx = L[i - w + 1] + 2 * L[i + 1] + L[i + w + 1] - L[i - w - 1] - 2 * L[i - 1] - L[i + w - 1];
+        const gy = L[i + w - 1] + 2 * L[i + w] + L[i + w + 1] - L[i - w - 1] - 2 * L[i - w] - L[i - w + 1];
+        E[i] = Math.min(1, Math.hypot(gx, gy) / 220) * edges;
+      }
+    }
+    // Lueur : flou de la densité (radio) ou des contours (néon)
+    const G = style === "radio" ? blur(D, w, h, 6) : style === "neon" ? blur(E, w, h, 3) : null;
+    const paint = STYLES[style] || STYLES.neon, o = [0, 0, 0];
+    for (let i = 0; i < n; i++) {
+      paint(D[i], E[i], G ? G[i] : 0, o);
+      p[4 * i] = o[0]; p[4 * i + 1] = o[1]; p[4 * i + 2] = o[2];   // tableau borné : dépassements écrêtés à 255
+    }
+    ctx.putImageData(im, 0, 0);
+    return true;
   }
 
   function runScan(img) {
@@ -209,13 +342,17 @@
     scan.style.setProperty("--scan-s", C.SCAN_S + "s");
     scan.className = "screen active scanning";
     hum(C.SCAN_S);
+    // L'étiquette met plusieurs secondes à sortir (mise en page puis impression) : on la lance pendant le
+    // balayage (PRINT_START_S après son début) pour qu'elle arrive avec le verdict. null = après le verdict.
+    const early = C.PRINT_START_S ?? null;
+    if (C.PRINT && early !== null) setTimeout(() => id === scanId && printLabel(), early * 1000);
     setTimeout(() => {
       if (id !== scanId) return;
       scan.className = "screen active cleared";
       $("#scan .status span").textContent = t.stamp;
       $("#scan .printing").textContent = C.PRINT ? t.printing : t.noprint;
       chime();
-      if (C.PRINT) setTimeout(printLabel, 600);
+      if (C.PRINT && early === null) setTimeout(printLabel, 600);
       resultTimer = setTimeout(reset, C.RESULT_SCREEN_S * 1000);
     }, C.SCAN_S * 1000);
   }
