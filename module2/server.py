@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serveur local du module 2 (360°), à lancer sur la borne.
+"""Serveur local du module 2 (Des yeux derrière la tête), à lancer sur la borne.
 
 Sert l'app (index.html…) sur http://127.0.0.1:<port>/ et relaie les snapshots des caméras IP :
 GET /snap/1 … /snap/4 -> image JPEG de la caméra correspondante (cameras.json).

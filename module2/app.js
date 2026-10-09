@@ -2,13 +2,13 @@
   const C = window.CONFIG;
   const UI = {
     fr: { hint: "Place-toi au centre\net prends ta plus belle pose !",
-          take: "Prendre une photo", title: "Ton 360°",
+          take: "Prendre une photo", title: "Des yeux derrière la tête",
           printing: "Ton étiquette s’imprime. Colle-la dans ton passeport !",
           noprint: "Voilà comment le miroir te voit.",
           error: "La photo n’a pas pu être prise. Réessaie dans un instant.",
           done: "Terminé" },
     en: { hint: "Stand in the middle\nand strike your best pose!",
-          take: "Take a photo", title: "Your 360°",
+          take: "Take a photo", title: "Eyes in the back of your head",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "This is how the mirror sees you.",
           error: "The photo could not be taken. Try again in a moment.",
@@ -85,6 +85,7 @@
     const t = UI[lang];
     $("#shoot .hint").textContent = t.hint;
     $("#shoot .take").textContent = t.take;
+    $("#shoot .name").textContent = $(".l-title").textContent = t.title;
     show("shoot"); poke();
   }));
   $(".restart").addEventListener("click", reset);

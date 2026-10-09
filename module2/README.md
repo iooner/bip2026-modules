@@ -1,4 +1,4 @@
-# Module 2 · 360° (Miroir Miroir, BIP 2026)
+# Module 2 · Des yeux derrière la tête (Miroir Miroir, BIP 2026)
 
 Écran tactile FR/EN. Page 2 : bouton « Prendre une photo ». Compte à rebours, puis les 4 caméras IP
 cachées sont appelées en même temps ; l'étiquette (Dymo 59×102 mm) imprime **1 image tirée au hasard**
