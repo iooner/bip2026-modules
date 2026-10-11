@@ -8,7 +8,7 @@
           error: "La photo n’a pas pu être prise. Réessaie dans un instant.",
           done: "Terminé" },
     en: { hint: "Stand in the middle\nand strike your best pose!",
-          take: "Take a photo", title: "Eyes in the back of your head",
+          take: "Take a photo", title: "Eyes behind your head",
           printing: "Your label is printing. Stick it in your passport!",
           noprint: "This is how the mirror sees you.",
           error: "The photo could not be taken. Try again in a moment.",
