@@ -124,6 +124,9 @@ em { font-style: italic; }
   text-shadow: 0 0 6px #000, 0 0 6px #000; pointer-events: none; }
 #debug .print { position: absolute; right: 1vw; bottom: 1vh; padding: 1.4vh 2vw; background: var(--navy); color: #fff;
   font-size: 2.4vh; font-weight: 500; border: 2px solid #fff; }
+/* Rangée du haut : légende et « Imprimer » en haut de l'image, pour laisser le milieu de l'écran à la barre de boutons */
+#debug figure:nth-child(-n+2) figcaption, #debug figure:nth-child(-n+2) .print { top: 0; bottom: auto; }
+#debug figure:nth-child(-n+2) .print { top: 1vh; }
 #debug .print:active { background: var(--mauve); }
 #debug .print:disabled { opacity: .4; }
 @media print { #debug { display: none; } }
