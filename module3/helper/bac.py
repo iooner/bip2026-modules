@@ -2,7 +2,7 @@
 
   python3 bac.py [/dev/video0]      # essai : écrit /tmp/bac-debug.jpg (bac en vert) et affiche la cadence
 """
-import json, os
+import fcntl, json, os, struct
 import cv2, numpy as np
 
 # Couleur de la bordure (teinte OpenCV 0…180, de h_lo à h_hi en passant par 0 si h_lo > h_hi ; saturation et
@@ -231,7 +231,20 @@ def ouvre(dev, size):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, size[0]); cap.set(cv2.CAP_PROP_FRAME_HEIGHT, size[1])
     cap.set(cv2.CAP_PROP_FPS, 30)
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    secteur_50hz(dev)
     return cap
+
+
+def secteur_50hz(dev):
+    """Anti-scintillement calé sur le secteur 50 Hz : la C920 démarre en 60 Hz, d'où des bandes sombres sous l'éclairage."""
+    try:  # VIDIOC_S_CTRL, V4L2_CID_POWER_LINE_FREQUENCY = 1 (50 Hz) ; OpenCV n'expose pas ce réglage
+        fd = os.open(dev if isinstance(dev, str) else f"/dev/video{dev}", os.O_RDWR)
+        try:
+            fcntl.ioctl(fd, 0xC008561C, struct.pack("Ii", 0x00980918, 1))
+        finally:
+            os.close(fd)
+    except OSError as e:
+        print("Anti-scintillement 50 Hz non appliqué :", e, flush=True)
 
 
 if __name__ == "__main__":
