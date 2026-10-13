@@ -268,6 +268,7 @@
     clearTimeout(pressTimer);
     if (on === !debug.hidden) return;
     debug.hidden = !on;
+    disarm(); $("#debug .msg").textContent = "";
     const run = ++debugRun;            // arrête les boucles de la vue précédente
     if (on) for (let i = 0; i < C.CAMERA_COUNT; i++) feed(i, run);
   }
@@ -280,6 +281,29 @@
   }, true);
   for (const e of ["pointerup", "pointercancel"]) addEventListener(e, () => clearTimeout(pressTimer), true);
   $("#debug .close").addEventListener("click", () => setDebug(false));
+
+  // Redémarrer / Éteindre : arrêt propre de la borne par server.py. Deux appuis : le second, dans les 4 s, confirme.
+  let armed = null, armTimer;
+  const disarm = () => {
+    clearTimeout(armTimer);
+    if (armed) { armed.textContent = armed.dataset.label; armed.classList.remove("armed"); }
+    armed = null;
+  };
+  $("#debug .bar").addEventListener("click", async e => {
+    const b = e.target.closest("[data-power]"), msg = $("#debug .msg");
+    if (!b || b !== armed) disarm();
+    if (!b) return;
+    if (!armed) {
+      armed = b; b.dataset.label = b.textContent; b.textContent = "Confirmer ?"; b.classList.add("armed");
+      armTimer = setTimeout(disarm, 4000);
+      return;
+    }
+    disarm();
+    try {
+      const r = await fetch("power/" + b.dataset.power, { method: "POST" });
+      msg.textContent = r.ok ? (b.dataset.power === "reboot" ? "Redémarrage en cours…" : "Extinction en cours…") : `Refusé (HTTP ${r.status})`;
+    } catch (err) { msg.textContent = "Serveur du module injoignable : arrêt impossible."; }
+  });
   addEventListener("keydown", e => {
     if (C.DEBUG_KEY && e.key === C.DEBUG_KEY && $("#welcome").classList.contains("active")) setDebug(debug.hidden);
     else if (e.key === "Escape") setDebug(false);
