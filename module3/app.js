@@ -105,15 +105,22 @@
   // Vue de réglage (helper en mode webcam) : appui de 5 s sur le ✕ de l'accueil, comme au module 4.
   // Grande image en direct avec l'état du suivi du bac. « Apprendre ce bac » règle la détection sur la couleur
   // de la bordure du bac posé sous la caméra (nouveau bac, autre éclairage) ; le cadre vert doit le suivre ensuite.
+  // « Redémarrer » / « Éteindre » : arrêt propre de la borne (power.js).
   const debug = $("#debug"), hiddenBtn = $("#welcome .xbox");
   let pressTimer;
   const setDebug = on => {
     debug.hidden = !on;
-    $("#debug .msg").textContent = "";
+    Power.disarm(); $("#debug .msg").textContent = "";
     if (on) $("#debug img").src = C.HELPER_URL + "/live.mjpg?debug&" + Date.now(); else $("#debug img").removeAttribute("src");
   };
-  hiddenBtn.addEventListener("pointerdown", () => { pressTimer = setTimeout(() => SIM || setDebug(true), 5000); });
-  for (const e of ["pointerup", "pointerleave", "pointercancel"]) hiddenBtn.addEventListener(e, () => clearTimeout(pressTimer));
+  // Écoute sur la fenêtre : le ✕ reste utilisable sous le bandeau « pause technique ».
+  addEventListener("pointerdown", e => {
+    const r = hiddenBtn.getBoundingClientRect();
+    if ($("#welcome").classList.contains("active") && debug.hidden
+        && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)
+      pressTimer = setTimeout(() => setDebug(true), 5000);
+  }, true);
+  for (const e of ["pointerup", "pointercancel"]) addEventListener(e, () => clearTimeout(pressTimer), true);
   $("#debug img").onerror = () => { $("#debug .msg").textContent = "Pas d’image : helper sans webcam, ou injoignable."; };
   $("#debug .bar").addEventListener("click", async e => {
     const what = e.target.dataset.do;

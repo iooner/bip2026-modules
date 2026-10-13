@@ -68,7 +68,7 @@
   $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue
   $("#place .go").addEventListener("click", startCountdown);
 
-  // --- Maintenance : réapprendre le décor vide (appui long 3 s sur le ✕ de l'accueil, ou touche CONFIG.LEARN_KEY) ---
+  // --- Maintenance : réapprendre le décor vide (vue de réglage, ou touche CONFIG.LEARN_KEY) ---
   let learning = false;
   function learnBackground() {
     if (learning || phase !== "welcome") return;
@@ -84,11 +84,24 @@
       setTimeout(tick, 200);
     })();
   }
-  let pressTimer;
-  const hidden = $("#welcome .xbox");
-  hidden.addEventListener("pointerdown", () => { pressTimer = setTimeout(learnBackground, 3000); });
-  for (const e of ["pointerup", "pointerleave", "pointercancel"]) hidden.addEventListener(e, () => clearTimeout(pressTimer));
   addEventListener("keydown", e => { if (e.key === C.LEARN_KEY) { e.preventDefault(); learnBackground(); } });
+
+  // Vue de réglage : appui de 5 s sur le ✕ de l'accueil. « Apprendre le décor vide », et « Redémarrer » /
+  // « Éteindre » : arrêt propre de la borne (power.js).
+  const debug = $("#debug"), hiddenBtn = $("#welcome .xbox");
+  let pressTimer;
+  const setDebug = on => { debug.hidden = !on; Power.disarm(); $("#debug .msg").textContent = ""; };
+  // Écoute sur la fenêtre : le ✕ reste utilisable sous le bandeau « pause technique ».
+  addEventListener("pointerdown", e => {
+    const r = hiddenBtn.getBoundingClientRect();
+    if ($("#welcome").classList.contains("active") && debug.hidden
+        && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)
+      pressTimer = setTimeout(() => setDebug(true), 5000);
+  }, true);
+  for (const e of ["pointerup", "pointercancel"]) addEventListener(e, () => clearTimeout(pressTimer), true);
+  $("#debug .close").addEventListener("click", () => setDebug(false));
+  $("#debug .learn").addEventListener("click", () => { setDebug(false); learnBackground(); });
+  addEventListener("keydown", e => { if (e.key === "Escape") setDebug(false); });
 
   // Le corps est-il centré sur la croix ?
   function onCross(body) {

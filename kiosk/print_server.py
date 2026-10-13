@@ -8,10 +8,11 @@ Rien n'apparaît à l'écran. Si ce service ne tourne pas, les modules reviennen
   POST http://127.0.0.1:8361/print   corps = document HTML de l'étiquette
   GET  http://127.0.0.1:8361/status  {"ok": bool, "problems": [{"code", "detail"}]} : état de l'impression,
                                      lu par status.js de chaque module (bandeau « en panne » sur l'accueil)
+  POST http://127.0.0.1:8361/power/reboot, /power/shutdown : redémarre ou éteint la borne (vue de réglage des modules)
 Lancé par kiosk/linux/kiosk.sh. Essai sans imprimer : BIP_NO_LP=1 python3 kiosk/print_server.py
 """
 import atexit, base64, json, os, re, select, shutil, signal, socket, struct, subprocess, sys, threading, time
-import urllib.request
+import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(os.environ.get("BIP_PRINT_PORT", 8361))   # autre port : essais sans toucher au service de la borne
@@ -294,6 +295,23 @@ def print_label(html):
             print("Étiquette envoyée à l'imprimante", flush=True)
 
 
+# Arrêt propre de la borne depuis la vue de réglage des modules (POST /power/reboot, /power/shutdown). La session
+# ouverte sur la borne a le droit d'éteindre sans mot de passe (logind) ; sinon sudo sans mot de passe (Raspberry Pi OS).
+POWER = {"reboot": "reboot", "shutdown": "poweroff"}
+
+
+def power(what):
+    for cmd in (["systemctl", POWER[what]], ["sudo", "-n", "systemctl", POWER[what]]):
+        if subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            return
+    print(f"{what} impossible : ni systemctl ni sudo n'ont accepté", flush=True)
+
+
+def local_origin(origin):
+    """Demande venue d'une page de la borne : file:// (Origin « null »), localhost, ou sans Origin (curl)."""
+    return not origin or origin == "null" or (urllib.parse.urlsplit(origin).hostname or "") in ("127.0.0.1", "localhost")
+
+
 class Handler(BaseHTTPRequestHandler):
     def reply(self, code, text=""):
         self.send_response(code)
@@ -314,6 +332,11 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(200, "bip2026 print")
 
     def do_POST(self):
+        what = self.path[7:] if self.path.startswith("/power/") else ""
+        if what in POWER and local_origin(self.headers.get("Origin")):
+            print(f"{what} demandé depuis la vue de réglage", flush=True)
+            self.reply(200, "ok")
+            return threading.Timer(1, power, [what]).start()   # après l'envoi de la réponse
         if self.path != "/print":
             return self.reply(404)
         try:

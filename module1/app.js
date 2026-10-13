@@ -77,6 +77,21 @@
     renderQuestion(); show("question"); poke();
   }));
   $(".restart").addEventListener("click", reset);
+
+  // Vue de réglage : appui de 5 s sur le ✕ de l'accueil. « Redémarrer » / « Éteindre » : arrêt propre de la borne (power.js).
+  const debug = $("#debug"), hiddenBtn = $("#welcome .xbox");
+  let pressTimer;
+  const setDebug = on => { debug.hidden = !on; Power.disarm(); $("#debug .msg").textContent = ""; };
+  // Écoute sur la fenêtre : le ✕ reste utilisable sous le bandeau « pause technique ».
+  addEventListener("pointerdown", e => {
+    const r = hiddenBtn.getBoundingClientRect();
+    if ($("#welcome").classList.contains("active") && debug.hidden
+        && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)
+      pressTimer = setTimeout(() => setDebug(true), 5000);
+  }, true);
+  for (const e of ["pointerup", "pointercancel"]) addEventListener(e, () => clearTimeout(pressTimer), true);
+  $("#debug .close").addEventListener("click", () => setDebug(false));
+  addEventListener("keydown", e => { if (e.key === "Escape") setDebug(false); });
   $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue
 
   // --- Questions ---

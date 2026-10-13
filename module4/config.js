@@ -19,7 +19,7 @@ window.CONFIG = {
   RECORD_S: 10,             // durée d'enregistrement des mouvements
   IDLE_TIMEOUT_S: 60,       // retour à l'accueil si personne
   RESULT_SCREEN_S: 30,      // durée de l'écran final
-  LEARN_KEY: "F9",         // touche (clavier) qui réapprend le décor vide ; aussi : appui long 3 s sur le ✕ de l'accueil
+  LEARN_KEY: "F9",         // touche (clavier) qui réapprend le décor vide ; aussi : vue de réglage (appui 5 s sur le ✕ de l'accueil)
   LEARN_DELAY_S: 5,         // temps pour sortir du champ avant l'apprentissage
   HIDE_CURSOR: true,        // true sur la borne
 };

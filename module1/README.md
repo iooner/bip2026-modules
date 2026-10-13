@@ -12,6 +12,11 @@ Taille de l’étiquette (mm, 59×102), impression on/off, nombre de résultats 
 activité (`IDLE_TIMEOUT_S`, 60 s), durée de l'écran final (`RESULT_SCREEN_S`, 60 s : le temps de lire et que
 l'étiquette sorte sur le Pi), curseur masqué (`HIDE_CURSOR`).
 
+## Vue de réglage
+Appui de 5 s sur le ✕ de l'accueil. « Redémarrer » et « Éteindre » arrêtent la borne proprement, par le service du
+kiosk (`kiosk/print_server.py` : `systemctl reboot` / `poweroff`) : premier appui, le bouton passe à « Confirmer ? »,
+second appui dans les 4 s pour valider. « Fermer » (ou Échap) pour sortir.
+
 ## Contenu
 Source : `tools/BIP2026_testpersonnalite.xlsx`. Après modification du tableau :
 `pip install openpyxl && python3 tools/build_content.py` (régénère `content.js`).

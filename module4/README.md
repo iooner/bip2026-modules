@@ -40,9 +40,13 @@ curl -fL -o ~/.cache/bip2026/pose_landmarker_full.task \
 ./module4/bridge/start.sh kinect
 ```
 
-**Décor vide** : la profondeur sert à isoler la personne du décor. À réapprendre quand la salle change : appui long
-3 s sur le ✕ de l'accueil (ou touche `F9`), puis sortir du champ pendant le décompte (`LEARN_DELAY_S`). Le décor
-est rangé dans `~/.cache/bip2026/kinect-fond.npy`.
+**Décor vide** : la profondeur sert à isoler la personne du décor. À réapprendre quand la salle change : vue de
+réglage, « Apprendre le décor vide » (ou touche `F9`), puis sortir du champ pendant le décompte (`LEARN_DELAY_S`). Le
+décor est rangé dans `~/.cache/bip2026/kinect-fond.npy`.
+
+**Vue de réglage** : appui de 5 s sur le ✕ de l'accueil. « Redémarrer » et « Éteindre » arrêtent la borne proprement
+par le service du kiosk (`kiosk/print_server.py`, `systemctl reboot` / `poweroff`) : premier appui, le bouton
+passe à « Confirmer ? », second appui dans les 4 s pour valider.
 
 ## Sources du pont
 
