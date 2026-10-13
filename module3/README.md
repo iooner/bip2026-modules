@@ -56,7 +56,10 @@ Cadrage de la photo (`CROP`, `ROTATE`, `MIRROR`, `FIT`), rendu rayons X à l'éc
 aéroport, noir ou ancien filtre ; contraste, luminosité, contours, négatif), rendu de l'étiquette (`PRINT_STYLE`,
 `PRINT_RX`, `PRINT_NEGATIVE`, `PRINT_INK` : rayons X en négatif par défaut, pour un tirage thermique peu chargé
 en noir), durées, impression (`PRINT_START_S` : lancée pendant le scan pour que l'étiquette sorte avec le
-verdict), vue caméra des consignes (`LIVE_PREVIEW`), son, curseur.
+verdict), vue caméra des consignes (`LIVE_PREVIEW`), son, curseur masqué (`HIDE_CURSOR`).
+
+L'étiquette part par le service d'impression silencieuse ([`kiosk/`](../kiosk/README.md)). Imprimante ou
+caméra hors service : bandeau « en panne » sur l'accueil.
 
 ## Polices
 Déposer dans `fonts/` : HelveticaNeueLTStd-Roman.otf, -It.otf, -Md.otf, -MdIt.otf (sinon repli Helvetica/Arial).

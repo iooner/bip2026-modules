@@ -1,52 +1,36 @@
 # Module 4 · Re-Kinect-Toi
 
-Choix de la langue → la personne se place sur la croix au sol (aperçu « miroir » de sa silhouette) →
-3, 2, 1 → 10 s pour bouger → ses mains, pieds et tête tracent une signature à l'encre (trait épais
-quand le geste est lent, fin quand il est rapide) → étiquette Dymo 59×102 mm imprimée.
+Choix de la langue → la personne se place sur la croix au sol (aperçu « miroir » de sa silhouette, indicateur de
+positionnement) → 3, 2, 1 → 10 s pour bouger → ses mains, pieds et tête tracent une signature à l'encre (trait
+épais quand le geste est lent, fin quand il est rapide) → écran final avec le replay de ses mouvements et bouton
+**Terminé / Done** → étiquette 59×102 mm imprimée.
 
-Réglages (durées, tolérance de la croix, simulation…) : `config.js`.
+Réglages (durées, tolérance de la croix, simulation, curseur…) : `config.js`.
 
 ## Fonctionnement
 
 ```
-Kinect ──USB──> bridge/kinect_bridge.py ──WebSocket ws://localhost:8765──> index.html (kiosk)
+Kinect v1 ──USB──> bridge/kinect_bridge.py ──WebSocket ws://localhost:8765──> index.html (kiosk)
 ```
 
-La page lit le corps envoyé par le pont. Si le pont ne répond pas, elle passe en **simulation**
-(`CONFIG.SIMULATION`) : `mouse` (souris ou doigt = main droite, main gauche en miroir), `demo` (danseur
-virtuel), `webcam` (détection de pose MediaPipe dans le navigateur, internet requis). L'écran de la croix
-indique la source utilisée (`kinect` ou le mode de simulation). Le bouton « Je suis prêt·e » force le départ.
+La page lit le corps envoyé par le pont. Aucune image du pont pendant 15 s : bandeau « en panne » (code `kinect`)
+sur l'accueil (`REQUIRE_KINECT: false` pour travailler sans Kinect). Sans pont, la page peut passer en
+**simulation** (`CONFIG.SIMULATION`) : `mouse` (souris ou doigt = main droite, main gauche en miroir), `demo`
+(danseur virtuel), `webcam` (MediaPipe dans le navigateur, internet requis). L'écran de la croix indique la
+source utilisée. Le bouton « Je suis prêt·e » force le départ.
 
-## Borne recommandée : petit PC Windows + Kinect v1
+## Borne : mini PC Linux + Kinect v1
 
-Sous Windows, le **Kinect for Windows SDK 1.8** (Microsoft, gratuit) donne un vrai squelette
-(20 articulations) avec la Kinect Xbox 360. C'est la seule option avec squelette pour une v1.
+PC type Core i5, Kinect Xbox 360 avec son **adaptateur secteur** (USB + 12 V), sur un port USB 2.0 de préférence.
+Placement : Kinect à ~1 m de haut, croix au sol à ~2,5 m (corps entier visible, portée 0,8–4 m). La caméra couleur
+a besoin de lumière sur la personne.
 
-1. Windows 10/11, Chrome, imprimante Dymo par défaut, connexion automatique.
-2. Installer le Kinect for Windows SDK 1.8 (KinectSDK-v1.8-Setup.exe, site Microsoft).
-3. Brancher la Kinect avec son **adaptateur secteur** (USB + 12 V), sur un port USB 2.0 de préférence.
-   Tester avec « Kinect Developer Toolkit » ou simplement l'étape 4.
-4. `module4\bridge\windows\build.bat` (compile `KinectBridge.exe` avec le compilateur C# fourni avec Windows).
-5. `kiosk\windows\install.bat module4` : au démarrage, `kiosk.bat` lance le pont puis Chrome en kiosk.
-
-Placement : Kinect à ~1 m de haut, croix au sol à ~2,5 m (le corps entier doit être visible, portée 0,8–4 m).
-Le pont suit la personne la plus proche du centre.
-
-## Autres ponts (`bridge/kinect_bridge.py`, Linux / Raspberry Pi)
-
-```
-python3 bridge/kinect_bridge.py --source freenect   # Kinect v1 via libfreenect : pas de squelette,
-                                                    # tête/mains/pieds tirés de la silhouette en profondeur
-python3 bridge/kinect_bridge.py --source kinect     # Kinect v1 + vrai squelette (MediaPipe sur sa caméra couleur,
-                                                    # profondeur pour la distance et la zone) : PC type Core i5
-python3 bridge/kinect_bridge.py --source webcam     # webcam + MediaPipe
-python3 bridge/kinect_bridge.py --source fake       # test sans matériel
-```
-Options : `--near 1.2 --far 3.5` (zone de la personne, en mètres), `--smooth`, `--no-mirror`.
-Installation Linux : `./kiosk/linux/setup-pi.sh module4 && ./module4/bridge/setup-pi.sh`.
-
-Squelette MediaPipe (sources `kinect` et `webcam`), dans un environnement Python à part que `bridge/start.sh` utilise
-s'il existe, avec le modèle de pose à côté du décor appris :
+1. Kiosk, impression et session GNOME comme les autres modules : `./kiosk/linux/install.sh module4`
+   (voir [`kiosk/`](../kiosk/README.md)).
+2. Pilote Kinect et démarrage auto du pont : `./module4/bridge/setup-pi.sh` (libfreenect, règles udev, autostart
+   `bridge/start.sh`, relancé s'il s'arrête). L'autostart démarre la source `freenect` : remplacer par `kinect`
+   dans `~/.config/autostart/bip2026-kinect.desktop` pour le vrai squelette.
+3. Squelette MediaPipe, dans un environnement Python à part que `start.sh` utilise s'il existe :
 ```
 sudo apt install python3-venv libfreenect0.5t64
 echo "blacklist gspca_kinect" | sudo tee /etc/modprobe.d/bip2026-kinect.conf   # pilote webcam du noyau : gêne libfreenect
@@ -55,7 +39,29 @@ curl -fL -o ~/.cache/bip2026/pose_landmarker_full.task \
   https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task
 ./module4/bridge/start.sh kinect
 ```
-La caméra couleur a besoin de lumière sur la personne (dans le noir : source `freenect`). `--tilt 0` met la Kinect à
-l'horizontale avec son moteur ; `--debug-dir DOSSIER` y dépose une image annotée par seconde. Le pont journalise sa cadence.
 
-**Non testé sur le matériel** : le pont Windows est compilé ici contre une maquette du SDK, pas avec une vraie Kinect.
+**Décor vide** : la profondeur sert à isoler la personne du décor. À réapprendre quand la salle change : appui long
+3 s sur le ✕ de l'accueil (ou touche `F9`), puis sortir du champ pendant le décompte (`LEARN_DELAY_S`). Le décor
+est rangé dans `~/.cache/bip2026/kinect-fond.npy`.
+
+## Sources du pont
+
+```
+./module4/bridge/start.sh kinect     # Kinect v1 + vrai squelette (MediaPipe sur sa caméra couleur, profondeur
+                                     # pour la distance et la zone) : la source de la borne
+./module4/bridge/start.sh freenect   # Kinect v1 sans squelette : tête/mains/pieds tirés de la silhouette en
+                                     # profondeur (fonctionne dans le noir, machine faible)
+./module4/bridge/start.sh webcam     # webcam + MediaPipe
+./module4/bridge/start.sh fake       # test sans matériel
+```
+Options (`python3 bridge/kinect_bridge.py --help`) : `--near 1.2 --far 3.5` (zone de la personne, en mètres),
+`--smooth`, `--no-mirror`, `--tilt 0` (Kinect à l'horizontale avec son moteur), `--debug-dir DOSSIER` (une image
+annotée par seconde). Le pont suit la personne la plus proche du centre et journalise sa cadence.
+
+## Variante Windows (Kinect for Windows SDK 1.8)
+
+1. Windows 10/11, Chrome, imprimante par défaut, connexion automatique ; installer le Kinect for Windows SDK 1.8.
+2. `module4\bridge\windows\build.bat` (compile `KinectBridge.exe` avec le compilateur C# fourni avec Windows).
+3. `kiosk\windows\install.bat module4` : au démarrage, `kiosk.bat` lance le pont puis Chrome en kiosk.
+
+**Non testé sur le matériel** : ce pont est compilé contre une maquette du SDK, pas avec une vraie Kinect.

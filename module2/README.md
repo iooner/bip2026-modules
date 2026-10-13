@@ -1,19 +1,20 @@
-# Module 2 · Des yeux derrière la tête (Miroir Miroir, BIP 2026)
+# Module 2 · Des yeux derrière la tête / Eyes behind your head (Miroir Miroir, BIP 2026)
 
 Écran tactile FR/EN. Page 2 : bouton « Prendre une photo ». Compte à rebours, puis les 4 caméras IP
 cachées sont appelées en même temps ; l'étiquette (Dymo 59×102 mm) imprime **1 image tirée au hasard**
-ou, en option, **les 4 recadrées en grille 2×2**.
+ou, en option, **les 4 recadrées en grille 2×2**. Bouton **Terminé / Done** sur l'écran final.
 
 ## Fichiers
 | Fichier | Rôle |
 |---|---|
 | `index.html`, `app.js`, `style.css` | l'app (même charte et scène 1024×768 que le module 1) |
-| `config.js` | réglages : mise en page `random` / `quad`, recadrage par caméra, compte à rebours, étiquette, mode démo |
-| `cameras.json` | adresses snapshot des 4 caméras + identifiants (**à remplir**) |
+| `config.js` | réglages : mise en page `random` / `quad`, recadrage par caméra, délai de prise de vue, compte à rebours, étiquette, mode démo |
+| `cameras.json` | adresses RTSP des 4 caméras (identifiants à part, dans `cameras.secret.json`) |
 | `server.py` | petit serveur local (Python 3 + ffmpeg pour le RTSP) : sert l'app et relaie `/snap/1…4` vers les caméras |
 
 Le navigateur ne peut pas lire directement une caméra IP (CORS, mot de passe) : `server.py` fait le relais
-sur `http://127.0.0.1:8360/`. Il refuse de servir `cameras.json`.
+sur `http://127.0.0.1:8360/`. Il refuse de servir `cameras.json` et envoie les fichiers de l'app sans cache
+(pas de vieille version après une mise à jour).
 
 ## Caméras : `cameras.json`
 Caméras retenues : **Tapo C110**. Elles n'ont pas d'URL snapshot HTTP, seulement un flux RTSP :
@@ -50,7 +51,8 @@ réseau ou caméra débranchée : reconnexion automatique. Réglages optionnels 
 
 ### Présence des caméras
 `server.py` sait à tout moment quelles caméras envoient des images (`GET /cameras`, vérifié toutes les 5 s par
-la page). Deux caméras absentes ou plus : bandeau « pause technique » sur l'accueil. Une seule : pas de bandeau
+la page). Bulles en haut à gauche de l'accueil : vert = images reçues, rouge = absente, gris = inconnu.
+Deux caméras absentes ou plus : bandeau « pause technique » sur l'accueil. Une seule : pas de bandeau
 (le tirage l'ignore), son numéro est écrit en petit en bas à droite de l'accueil. Seuil : `CAMERAS_DOWN_OK`.
 
 ### Qualité d'image
@@ -60,8 +62,8 @@ en vision nocturne noir et blanc granuleuse : mode nuit sur « jour » ou « aut
 
 ## Recadrage : `config.js`
 `CROP` : pour chaque caméra, le centre (`x`, `y` de 0 à 1) et le `zoom`, à régler sur place pour que la personne
-soit au centre. `LAYOUT: "quad"` pour la grille de 4. `DEMO: true` remplace une caméra muette par une image
-de test (mettre `false` en expo pour afficher un message d'erreur à la place).
+soit au centre. `LAYOUT: "quad"` pour la grille de 4. `SHOT_DELAY_MS` (1,5 s) : attente entre la fin du décompte
+et la photo. `DEMO` est à `false` sur la borne (caméra muette ignorée) ; `true` la remplace par une image de test.
 
 ### Vue de réglage
 Appui de 5 s sur le ✕ de l'accueil (ou touche `d` au clavier, `DEBUG_KEY`) : les 4 caméras en direct, avec en vert
@@ -74,9 +76,10 @@ premier appui, le bouton passe à « Confirmer ? », second appui dans les 4 s p
 Le ✕ répond aussi sous le bandeau « pause technique ».
 
 ## Lancer
-- Borne (mini PC) : installer **Python 3** et **ffmpeg** (Windows : `winget install Python.Python.3.12 Gyan.FFmpeg` ;
-  Linux : `sudo apt install python3 ffmpeg`), puis l'autorun `kiosk\windows\install.bat module2` ou
-  `./kiosk/linux/install.sh module2`.
+- Borne (mini PC Linux, GNOME) : `sudo apt install python3 ffmpeg`, pilote d'imprimante TSPL et session
+  kiosk GNOME ([`kiosk/linux/tspl/`](../kiosk/linux/tspl/README.md)), `cameras.secret.json`, puis
+  `./kiosk/linux/install.sh module2`. Sous Windows : `winget install Python.Python.3.12 Gyan.FFmpeg` puis
+  `kiosk\windows\install.bat module2`.
 - Raspberry Pi : `./kiosk/linux/setup-pi.sh module2` (le kiosk démarre `server.py` tout seul, voir [`kiosk/`](../kiosk/README.md)).
 - Test sur un poste : `python3 server.py` puis ouvrir http://127.0.0.1:8360/.
   En ouvrant `index.html` directement (sans serveur), le mode démo affiche 4 images de test.
