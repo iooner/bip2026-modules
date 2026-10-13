@@ -59,6 +59,10 @@ ne répond pas, la page revient à l'impression du navigateur. `GET /status` don
 en continu : arrêtée, file bloquée, rouleau vide, capot ouvert, pilote pas à jour). Essai sans imprimer :
 `BIP_NO_LP=1 python3 kiosk/print_server.py`.
 
+Le même service redémarre ou éteint la borne (`POST /power/reboot`, `/power/shutdown` : `systemctl reboot` /
+`poweroff`, sinon `sudo -n`) pour les boutons « Redémarrer » / « Éteindre » de la vue de réglage des modules 1, 3 et 4
+(appui de 5 s sur le ✕ de l'accueil). Refusé si la demande ne vient pas d'une page de la borne.
+
 ## Bandeau « en panne »
 Quand l'impression ou le matériel d'un module est hors service, l'accueil est grisé et barré d'un bandeau qui invite
 à prévenir l'équipe ; la cause est écrite en petit en bas de l'écran (`etiquettes`, `capot`, `file`, `imprimante`,

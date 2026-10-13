@@ -2,6 +2,7 @@
 // (vrai squelette : 20 articulations). Même format que kinect_bridge.py :
 //   {"bodies":[{"center":[x,y],"z":m,"joints":{"head":[x,y],"handL":[x,y],...}}]}
 // Coordonnées normalisées 0..1, image en miroir, y vers le bas. Servi sur ws://localhost:8765/.
+// POST http://localhost:8765/power/reboot ou /power/shutdown : redémarre ou éteint le PC (vue de réglage de la page).
 // Compilation : build.bat (aucun Visual Studio requis).
 using System;
 using System.Globalization;
@@ -104,10 +105,28 @@ class KinectBridge
         while (true)
         {
             var ctx = await listener.GetContextAsync();
+            if (ctx.Request.HttpMethod == "POST") { Power(ctx); continue; }
             if (!ctx.Request.IsWebSocketRequest) { ctx.Response.StatusCode = 400; ctx.Response.Close(); continue; }
             var wsc = await ctx.AcceptWebSocketAsync(null);
             var ignored = Task.Run(() => ClientLoop(wsc.WebSocket));
         }
+    }
+
+    // Arrêt propre du PC depuis la vue de réglage. Refusé si la demande vient d'une autre page que celles de la borne
+    // (file://, Origin « null », ou localhost).
+    static void Power(HttpListenerContext ctx)
+    {
+        string path = ctx.Request.Url.AbsolutePath, origin = ctx.Request.Headers["Origin"];
+        string args = path == "/power/reboot" ? "/r /t 0" : path == "/power/shutdown" ? "/s /t 0" : null;
+        Uri o;
+        bool local = origin == null || origin == "null"
+            || (Uri.TryCreate(origin, UriKind.Absolute, out o) && (o.Host == "localhost" || o.Host == "127.0.0.1"));
+        ctx.Response.AddHeader("Access-Control-Allow-Origin", "*");   // page en file://
+        ctx.Response.StatusCode = args != null && local ? 200 : 404;
+        ctx.Response.Close();
+        if (args == null || !local) return;
+        Console.WriteLine("shutdown " + args + " demandé depuis la vue de réglage");
+        Task.Delay(1000).ContinueWith(t => System.Diagnostics.Process.Start("shutdown", args));
     }
 
     // Envoie la dernière image ~30 fois par seconde ; liste vide si la Kinect ne répond plus.

@@ -47,6 +47,17 @@
 
 </div>
 
+<!-- Vue de réglage : appui de 5 s sur le ✕ de l'accueil -->
+<div id="debug" hidden>
+  <h2>Réglages · module 1</h2>
+  <div class="bar">
+    <button data-power="reboot">Redémarrer</button>
+    <button data-power="shutdown">Éteindre</button>
+    <button class="close">Fermer</button>
+  </div>
+  <p class="msg"></p>
+</div>
+
 <!-- Étiquette : invisible à l'écran, seule chose imprimée -->
 <div id="label">
   <div class="l-head">
@@ -59,6 +70,7 @@
 
 <script src="config.js"></script>
 <script src="status.js"></script>
+<script src="power.js"></script>
 <script src="content.js"></script>
 <script src="app.js"></script>
 </body>

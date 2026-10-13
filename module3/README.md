@@ -45,6 +45,8 @@ se vide ne donnent donc qu'un scan.
   « Apprendre ce bac (vide) ». Le helper trouve la couleur vive de la bordure, mémorise l'aspect du bac vide et
   l'épaisseur de ses parois, et range le tout dans `~/.config/bip2026/module3-bac.json` (propre à la borne, hors
   dépôt). À refaire quand le bac ou l'éclairage change. « Couleur d'origine » revient au ruban orange par défaut.
+- **Redémarrer / Éteindre** (vue de réglage) : arrêt propre de la borne par le service du kiosk
+  (`kiosk/print_server.py`, `systemctl reboot` / `poweroff`). Premier appui : « Confirmer ? », second appui dans les 4 s.
 - **Bac vide** : une fois appris, un bac vide n'est pas scanné ; l'écran des consignes le dit, et le scan part dès
   qu'on y pose quelque chose. La photo ne garde que le fond du bac (bordure et parois rognées).
 - **Bac déjà en place au lancement** : pas scanné (20 premières secondes). **Webcam débranchée** : bandeau
