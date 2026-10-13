@@ -22,6 +22,4 @@ window.CONFIG = {
   LEARN_KEY: "F9",         // touche (clavier) qui réapprend le décor vide ; aussi : vue de réglage (appui 5 s sur le ✕ de l'accueil)
   LEARN_DELAY_S: 5,         // temps pour sortir du champ avant l'apprentissage
   HIDE_CURSOR: true,        // true sur la borne
-  // « Redémarrer » / « Éteindre » de la vue de réglage : service du kiosk (Linux), sinon pont Kinect (Windows)
-  POWER_URLS: ["http://127.0.0.1:8361/power/", "http://localhost:8765/power/"],
 };

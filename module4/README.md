@@ -45,9 +45,8 @@ réglage, « Apprendre le décor vide » (ou touche `F9`), puis sortir du champ 
 décor est rangé dans `~/.cache/bip2026/kinect-fond.npy`.
 
 **Vue de réglage** : appui de 5 s sur le ✕ de l'accueil. « Redémarrer » et « Éteindre » arrêtent la borne proprement
-(premier appui : « Confirmer ? », second appui dans les 4 s) : sous Linux par le service du kiosk
-(`kiosk/print_server.py`, `systemctl`), sous Windows par le pont Kinect (`shutdown /r` ou `/s`). Après mise à jour
-d'une borne Windows, supprimer `bridge\windows\KinectBridge.exe` pour qu'il soit recompilé avec cette fonction.
+par le service du kiosk (`kiosk/print_server.py`, `systemctl reboot` / `poweroff`) : premier appui, le bouton
+passe à « Confirmer ? », second appui dans les 4 s pour valider.
 
 ## Sources du pont
 

@@ -1,9 +1,8 @@
 // Boutons « Redémarrer » / « Éteindre » de la vue de réglage (#debug [data-power]) : arrêt propre de la borne.
 // Deux appuis : le premier arme le bouton (« Confirmer ? »), le second, dans les 4 s, confirme.
-// La demande part au service du kiosk (kiosk/print_server.py, Linux), puis aux adresses suivantes de
-// CONFIG.POWER_URLS si elle n'aboutit pas (module 4 sous Windows : pont Kinect).
+// La demande part au service du kiosk (kiosk/print_server.py : systemctl reboot / poweroff).
 window.Power = (() => {
-  const URLS = (window.CONFIG || {}).POWER_URLS || ["http://127.0.0.1:8361/power/"];
+  const URL_ = "http://127.0.0.1:8361/power/";
   let armed = null, timer;
   const disarm = () => {
     clearTimeout(timer);
@@ -21,15 +20,10 @@ window.Power = (() => {
     }
     disarm();
     msg.textContent = "…";
-    let last = "Service du kiosk injoignable : arrêt impossible.";
-    for (const url of URLS) {
-      try {
-        const r = await fetch(url + b.dataset.power, { method: "POST" });
-        if (r.ok) { msg.textContent = b.dataset.power === "reboot" ? "Redémarrage en cours…" : "Extinction en cours…"; return; }
-        last = `Refusé (HTTP ${r.status})`;
-      } catch (err) { /* adresse suivante */ }
-    }
-    msg.textContent = last;
+    try {
+      const r = await fetch(URL_ + b.dataset.power, { method: "POST" });
+      msg.textContent = r.ok ? (b.dataset.power === "reboot" ? "Redémarrage en cours…" : "Extinction en cours…") : `Refusé (HTTP ${r.status})`;
+    } catch (err) { msg.textContent = "Service du kiosk injoignable : arrêt impossible."; }
   });
   return { disarm };
 })();

@@ -87,7 +87,7 @@
   addEventListener("keydown", e => { if (e.key === C.LEARN_KEY) { e.preventDefault(); learnBackground(); } });
 
   // Vue de réglage : appui de 5 s sur le ✕ de l'accueil. « Apprendre le décor vide », et « Redémarrer » /
-  // « Éteindre » : arrêt propre de la borne (power.js ; sous Windows, par le pont Kinect).
+  // « Éteindre » : arrêt propre de la borne (power.js).
   const debug = $("#debug"), hiddenBtn = $("#welcome .xbox");
   let pressTimer;
   const setDebug = on => { debug.hidden = !on; Power.disarm(); $("#debug .msg").textContent = ""; };
