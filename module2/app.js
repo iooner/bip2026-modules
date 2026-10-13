@@ -218,7 +218,23 @@
   // CROP et LAYOUT de config.js) ; le reste de l'image est assombri. Sert à orienter les caméras et régler CROP.
   const debug = $("#debug"), xbox = $("#welcome .xbox");
   let debugRun = 0, pressTimer;
-  debug.querySelector(".grid").innerHTML = "<figure><canvas></canvas><figcaption></figcaption></figure>".repeat(C.CAMERA_COUNT);
+  debug.querySelector(".grid").innerHTML = Array.from({ length: C.CAMERA_COUNT }, (_, i) =>
+    `<figure><canvas></canvas><figcaption></figcaption><button class="print" data-cam="${i}">Imprimer</button></figure>`).join("");
+  // « Imprimer » : une étiquette de cette caméra, par le même chemin qu'une vraie photo (compose puis printLabel).
+  debug.querySelector(".grid").addEventListener("click", async e => {
+    const b = e.target.closest(".print");
+    if (!b || b.disabled) return;
+    const i = +b.dataset.cam, lphoto = $(".l-photo");
+    b.disabled = true;
+    try {
+      const shots = Array(C.CAMERA_COUNT).fill(null);
+      shots[i] = await grab(i + 1);
+      lphoto.src = compose(shots);
+      await lphoto.decode().catch(() => {});
+      await printLabel();
+    } catch (err) { console.warn(`Impression caméra ${i + 1} :`, err.message); }
+    setTimeout(() => { b.disabled = false; }, 3000);
+  });
 
   async function feed(i, run) {
     const fig = debug.querySelectorAll("figure")[i], cv = $("canvas", fig), ctx = cv.getContext("2d"), cap = $("figcaption", fig);

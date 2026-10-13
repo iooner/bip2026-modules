@@ -68,6 +68,7 @@ Appui de 5 s sur le ✕ de l'accueil (ou touche `d` au clavier, `DEBUG_KEY`) : l
 la **zone imprimée** sur l'étiquette pour chacune (calculée comme le recadrage de l'étiquette, donc selon `CROP`
 et `LAYOUT`) ; le reste de l'image est assombri. Une caméra sans image est signalée en rouge avec la raison.
 Modifier `CROP` dans `config.js`, recharger la page et rouvrir la vue pour vérifier. « Fermer » (ou Échap) pour sortir.
+« Imprimer », sur chaque caméra, sort une étiquette de cette caméra par le même chemin qu'une vraie photo.
 Le ✕ répond aussi sous le bandeau « pause technique ».
 
 ## Lancer
