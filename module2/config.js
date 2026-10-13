@@ -25,6 +25,8 @@ window.CONFIG = {
     { x: 0.5, y: 0.5, zoom: 1 },
     { x: 0.5, y: 0.5, zoom: 1 },
   ],
+  // Pour le régler : vue de réglage (appui de 5 s sur le ✕ de l'accueil), le cadre vert = ce qui est imprimé.
+  DEBUG_KEY: "d",         // touche du clavier qui ouvre / ferme la vue de réglage sur l'accueil ("" : aucune)
   DEMO: false,            // caméra injoignable : image de test au lieu d'une erreur (false en expo)
 
   SHOT_DELAY_MS: 1500,    // attente entre la fin du décompte et la capture : augmenter si la photo est prise trop tôt, 0 si trop tard

@@ -147,16 +147,28 @@
   // --- Composition de l'image de l'étiquette ---
   const px = mm => Math.round(mm / 25.4 * C.LABEL_DPI);
 
-  // Recadre img dans (dx, dy, dw, dh) autour du centre crop.x/y, avec crop.zoom.
-  function drawCrop(ctx, img, crop, dx, dy, dw, dh) {
-    const iw = img.width, ih = img.height, ar = dw / dh;
+  // Zone d'une image iw×ih gardée pour un cadre de rapport ar (largeur / hauteur), autour du centre
+  // crop.x/y, avec crop.zoom. Sert au dessin de l'étiquette et au cadre de la vue de réglage.
+  function cropRect(iw, ih, crop, ar) {
     let sw = iw, sh = iw / ar;
     if (sh > ih) { sh = ih; sw = ih * ar; }
     const z = Math.max(1, crop.zoom || 1);
     sw /= z; sh /= z;
     const sx = Math.min(Math.max(crop.x * iw - sw / 2, 0), iw - sw);
     const sy = Math.min(Math.max(crop.y * ih - sh / 2, 0), ih - sh);
-    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    return { sx, sy, sw, sh };
+  }
+
+  // Recadre img dans (dx, dy, dw, dh).
+  function drawCrop(ctx, img, crop, dx, dy, dw, dh) {
+    const r = cropRect(img.width, img.height, crop, dw / dh);
+    ctx.drawImage(img, r.sx, r.sy, r.sw, r.sh, dx, dy, dw, dh);
+  }
+
+  // Case (px) où l'image d'une caméra est dessinée sur l'étiquette : toute la zone photo, ou un quart en "quad".
+  function slot() {
+    const cw = px(PW), ch = px(PH), gap = px(1);
+    return C.LAYOUT === "quad" ? { w: (cw - gap) / 2, h: (ch - gap) / 2, gap } : { w: cw, h: ch, gap: 0 };
   }
 
   let lastCam = -1;
@@ -166,15 +178,15 @@
     const c = document.createElement("canvas"), ctx = c.getContext("2d");
     c.width = px(PW); c.height = px(PH);
     ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+    const { w, h, gap } = slot();
     if (C.LAYOUT === "quad") {
-      const gap = px(1), w = (c.width - gap) / 2, h = (c.height - gap) / 2;
       shots.forEach((s, i) => s && drawCrop(ctx, s, C.CROP[i], (i % 2) * (w + gap), Math.floor(i / 2) * (h + gap), w, h));
     } else {
       // Tirage au hasard, jamais deux fois de suite la même caméra
       const pool = ok.length > 1 ? ok.filter(k => k !== lastCam) : ok;
       const i = lastCam = pool[Math.floor(Math.random() * pool.length)];
       console.log("Caméra tirée :", i + 1);
-      drawCrop(ctx, shots[i], C.CROP[i], 0, 0, c.width, c.height);
+      drawCrop(ctx, shots[i], C.CROP[i], 0, 0, w, h);
     }
     return c.toDataURL("image/jpeg", 0.92);
   }
@@ -200,6 +212,62 @@
     clearTimeout(idleTimer);
     resultTimer = setTimeout(reset, C.RESULT_SCREEN_S * 1000);
   }
+
+  // --- Vue de réglage : appui de 5 s sur le ✕ de l'accueil, comme aux modules 3 et 4 (ou touche DEBUG_KEY) ---
+  // Les 4 caméras en direct, avec en vert la zone qui part sur l'étiquette (même calcul que drawCrop, donc
+  // CROP et LAYOUT de config.js) ; le reste de l'image est assombri. Sert à orienter les caméras et régler CROP.
+  const debug = $("#debug"), xbox = $("#welcome .xbox");
+  let debugRun = 0, pressTimer;
+  debug.querySelector(".grid").innerHTML = "<figure><canvas></canvas><figcaption></figcaption></figure>".repeat(C.CAMERA_COUNT);
+
+  async function feed(i, run) {
+    const fig = debug.querySelectorAll("figure")[i], cv = $("canvas", fig), ctx = cv.getContext("2d"), cap = $("figcaption", fig);
+    const s = slot(), crop = C.CROP[i];
+    while (debugRun === run) {
+      try {
+        const img = await grab(i + 1);
+        if (debugRun !== run) return img.close();
+        const k = 960 / img.width, r = cropRect(img.width, img.height, crop, s.w / s.h);
+        cv.width = 960; cv.height = Math.round(img.height * k);
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        ctx.fillStyle = "rgba(0,0,0,.6)";
+        ctx.beginPath(); ctx.rect(0, 0, cv.width, cv.height); ctx.rect(r.sx * k, r.sy * k, r.sw * k, r.sh * k);
+        ctx.fill("evenodd");
+        ctx.strokeStyle = "#5fe08a"; ctx.lineWidth = 4;
+        ctx.strokeRect(r.sx * k, r.sy * k, r.sw * k, r.sh * k);
+        cap.textContent = `Caméra ${i + 1} · ${img.width}×${img.height} · zone imprimée ${Math.round(r.sw)}×${Math.round(r.sh)}` +
+          ` · x ${crop.x} y ${crop.y} zoom ${crop.zoom || 1}`;
+        fig.classList.remove("down");
+        img.close();
+        await wait(100);
+      } catch (err) {
+        cap.textContent = `Caméra ${i + 1} · pas d’image (${err.message})`;
+        fig.classList.add("down");
+        await wait(1000);
+      }
+    }
+  }
+
+  function setDebug(on) {
+    clearTimeout(pressTimer);
+    if (on === !debug.hidden) return;
+    debug.hidden = !on;
+    const run = ++debugRun;            // arrête les boucles de la vue précédente
+    if (on) for (let i = 0; i < C.CAMERA_COUNT; i++) feed(i, run);
+  }
+  // Écoute sur la fenêtre : le ✕ reste utilisable sous le bandeau « pause technique » (caméras absentes).
+  addEventListener("pointerdown", e => {
+    const r = xbox.getBoundingClientRect();
+    if ($("#welcome").classList.contains("active") && debug.hidden
+        && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)
+      pressTimer = setTimeout(() => setDebug(true), 5000);
+  }, true);
+  for (const e of ["pointerup", "pointercancel"]) addEventListener(e, () => clearTimeout(pressTimer), true);
+  $("#debug .close").addEventListener("click", () => setDebug(false));
+  addEventListener("keydown", e => {
+    if (C.DEBUG_KEY && e.key === C.DEBUG_KEY && $("#welcome").classList.contains("active")) setDebug(debug.hidden);
+    else if (e.key === "Escape") setDebug(false);
+  });
 
   // --- Présence des caméras (server.py, GET /cameras) ---
   // Plus de CAMERAS_DOWN_OK caméras absentes (ou toutes) : bandeau « pause technique ».
