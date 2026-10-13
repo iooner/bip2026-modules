@@ -63,6 +63,16 @@ en vision nocturne noir et blanc granuleuse : mode nuit sur « jour » ou « aut
 soit au centre. `LAYOUT: "quad"` pour la grille de 4. `DEMO: true` remplace une caméra muette par une image
 de test (mettre `false` en expo pour afficher un message d'erreur à la place).
 
+### Vue de réglage
+Appui de 5 s sur le ✕ de l'accueil (ou touche `d` au clavier, `DEBUG_KEY`) : les 4 caméras en direct, avec en vert
+la **zone imprimée** sur l'étiquette pour chacune (calculée comme le recadrage de l'étiquette, donc selon `CROP`
+et `LAYOUT`) ; le reste de l'image est assombri. Une caméra sans image est signalée en rouge avec la raison.
+Modifier `CROP` dans `config.js`, recharger la page et rouvrir la vue pour vérifier. « Fermer » (ou Échap) pour sortir.
+« Imprimer », sur chaque caméra, sort une étiquette de cette caméra par le même chemin qu'une vraie photo.
+« Redémarrer » et « Éteindre » arrêtent la borne proprement (`systemctl reboot` / `poweroff` lancés par `server.py`) :
+premier appui, le bouton passe à « Confirmer ? », second appui dans les 4 s pour valider.
+Le ✕ répond aussi sous le bandeau « pause technique ».
+
 ## Lancer
 - Borne (mini PC) : installer **Python 3** et **ffmpeg** (Windows : `winget install Python.Python.3.12 Gyan.FFmpeg` ;
   Linux : `sudo apt install python3 ffmpeg`), puis l'autorun `kiosk\windows\install.bat module2` ou

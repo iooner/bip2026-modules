@@ -3,6 +3,7 @@
 
 Sert l'app (index.html…) sur http://127.0.0.1:<port>/ et relaie les snapshots des caméras IP :
 GET /snap/1 … /snap/4 -> image JPEG de la caméra correspondante (cameras.json).
+POST /power/reboot, /power/shutdown -> redémarre ou éteint la borne (vue de réglage de la page).
 Le navigateur ne peut pas appeler les caméras directement (CORS, identifiants), d'où ce relais.
 URL http(s):// : image snapshot de la caméra. URL rtsp:// (Tapo C110…) : flux lu en continu par ffmpeg
 (sudo apt install ffmpeg), la dernière image est gardée en mémoire et servie tout de suite.
@@ -11,6 +12,7 @@ Sinon Python 3 seul, aucune dépendance.
 import json
 import pathlib
 import subprocess
+import sys
 import threading
 import time
 import urllib.parse
@@ -37,6 +39,10 @@ SNAP_WAIT = CFG.get("snap_wait_s", 2)     # attente max d'une image prise après
 STALE = 10                                # au-delà (s), la dernière image est trop vieille
 GRACE = 20                                # au démarrage (s), une caméra pas encore connectée n'est pas absente
 STARTED = time.monotonic()
+# Arrêt propre de la borne depuis la vue de réglage (POST /power/reboot, /power/shutdown). Sous Linux, la
+# session ouverte sur la borne a le droit d'éteindre sans mot de passe (logind).
+POWER = ({"reboot": ["shutdown", "/r", "/t", "0"], "shutdown": ["shutdown", "/s", "/t", "0"]} if sys.platform == "win32"
+         else {"reboot": ["systemctl", "reboot"], "shutdown": ["systemctl", "poweroff"]})
 
 
 def rtsp_url(cam):
@@ -181,6 +187,22 @@ class Handler(SimpleHTTPRequestHandler):
         if path.endswith(".json") or path.endswith(".py"):   # identifiants des caméras
             return self.send_error(404)
         return super().do_GET()
+
+    def do_POST(self):
+        """POST /power/reboot ou /power/shutdown : redémarre ou éteint la borne (boutons de la vue de réglage).
+        Refusé si la demande vient d'une autre page que l'app (en-tête Origin)."""
+        path = self.path.split("?")[0]
+        what = path[7:] if path.startswith("/power/") else ""
+        origin = self.headers.get("Origin")
+        if what not in POWER or (origin and urllib.parse.urlsplit(origin).netloc != self.headers.get("Host")):
+            return self.send_error(404)
+        self.log_message("%s demandé depuis la vue de réglage", what)
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", "12")
+        self.end_headers()
+        self.wfile.write(b'{"ok": true}')
+        threading.Timer(1, subprocess.run, [POWER[what]]).start()   # après l'envoi de la réponse
 
     def cameras(self):
         """Présence des caméras : [{"n": 1, "ok": true|false|null, "error": "…"}] (null = pas de flux continu).

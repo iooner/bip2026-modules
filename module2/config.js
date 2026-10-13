@@ -7,7 +7,9 @@ window.CONFIG = {
   LABEL_MARGIN_MM: 3,
   LABEL_HEAD_MM: 15,      // hauteur réservée à l'en-tête (logo + titre)
   LABEL_DPI: 300,         // résolution de l'image envoyée à l'imprimante
-  LABEL_FILTER: "grayscale(1) contrast(1.15)", // rendu sur l'étiquette (imprimante noir et blanc)
+  // Rendu sur l'étiquette (imprimante noir et blanc). contrast < 1 débouche les ombres (vêtements sombres),
+  // > 1 les durcit ; brightness > 1 éclaircit l'ensemble. Tester avec « Imprimer » dans la vue de réglage.
+  LABEL_FILTER: "grayscale(1) contrast(0.9) brightness(1.15)",
 
   // "random" : 1 caméra tirée au hasard. "quad" : les 4 recadrées en grille 2×2.
   LAYOUT: "random",
@@ -22,9 +24,11 @@ window.CONFIG = {
   CROP: [
     { x: 0.5, y: 0.5, zoom: 1 },
     { x: 0.5, y: 0.5, zoom: 1 },
-    { x: 0.5, y: 0.5, zoom: 1 },
-    { x: 0.5, y: 0.5, zoom: 1 },
+    { x: 0.5, y: 0.5, zoom: 2 },
+    { x: 0.5, y: 0.5, zoom: 2 },
   ],
+  // Pour le régler : vue de réglage (appui de 5 s sur le ✕ de l'accueil), le cadre vert = ce qui est imprimé.
+  DEBUG_KEY: "d",         // touche du clavier qui ouvre / ferme la vue de réglage sur l'accueil ("" : aucune)
   DEMO: false,            // caméra injoignable : image de test au lieu d'une erreur (false en expo)
 
   SHOT_DELAY_MS: 1500,    // attente entre la fin du décompte et la capture : augmenter si la photo est prise trop tôt, 0 si trop tard
