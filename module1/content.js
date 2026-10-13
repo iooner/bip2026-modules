@@ -132,7 +132,7 @@ window.CONTENT = {
     "q": "Quel est ton animal totem ?",
     "answers": [
      {
-      "label": "La requin-marteau",
+      "label": "Le requin-marteau",
       "result": "Apprends à reconnaître les champignons comestibles. Ton avenir pourrait en dépendre."
      },
      {
