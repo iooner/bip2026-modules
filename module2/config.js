@@ -22,8 +22,8 @@ window.CONFIG = {
   CROP: [
     { x: 0.5, y: 0.5, zoom: 1 },
     { x: 0.5, y: 0.5, zoom: 1 },
-    { x: 0.5, y: 0.5, zoom: 2 },
-    { x: 0.5, y: 0.5, zoom: 2 },
+    { x: 0.40, y: 0.57, zoom: 2 },
+    { x: 0.52, y: 0.60, zoom: 2 },
   ],
   // Pour le régler : vue de réglage (appui de 5 s sur le ✕ de l'accueil), le cadre vert = ce qui est imprimé.
   DEBUG_KEY: "d",         // touche du clavier qui ouvre / ferme la vue de réglage sur l'accueil ("" : aucune)
