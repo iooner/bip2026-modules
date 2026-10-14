@@ -202,7 +202,6 @@
     lc.width = 626; lc.height = 830;
     S.render(lc.getContext("2d"), tracks, { color: "#000", width: 12, pad: 0.04 });
     $(".l-title").textContent = t.label;
-    $(".l-meta").textContent = meta;
     const img = $(".l-sig");
     img.onload = () => { if (C.PRINT) setTimeout(printLabel, 300); };
     img.src = lc.toDataURL("image/png");
