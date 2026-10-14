@@ -71,7 +71,7 @@ la **zone imprimée** sur l'étiquette pour chacune (calculée comme le recadrag
 et `LAYOUT`) ; le reste de l'image est assombri. Une caméra sans image est signalée en rouge avec la raison.
 Modifier `CROP` dans `config.js`, recharger la page et rouvrir la vue pour vérifier. « Fermer » (ou Échap) pour sortir.
 
-« Pause vernissage » : écran plein « revenez dès le 18 octobre » à la place de la borne (`pause.js`, commun aux 4 modules). Active par défaut toute la journée du 17 octobre 2026 (`DAY`, heure de la borne), inactive les autres jours. Le bouton de la vue de réglage force l'inverse pour la journée en cours (gardé dans le navigateur : survit à un rechargement ou un redémarrage) ; le ✕ de l'accueil reste actif sous l'écran de pause.
+« Pause vernissage » : écran plein « revenez dès le 18 octobre » à la place de la borne (`pause.js`, commun aux 4 modules). Les autres jours, une pause manuelle affiche « Ce module est actuellement en pause. Désolé pour la gêne occasionnée. » (FR/EN). Active par défaut toute la journée du 17 octobre 2026 (`DAY`, heure de la borne), inactive les autres jours. Le bouton de la vue de réglage force l'inverse pour la journée en cours (gardé dans le navigateur : survit à un rechargement ou un redémarrage) ; le ✕ de l'accueil reste actif sous l'écran de pause.
 « Imprimer », sur chaque caméra, sort une étiquette de cette caméra par le même chemin qu'une vraie photo.
 « Redémarrer » et « Éteindre » arrêtent la borne proprement (`systemctl reboot` / `poweroff` lancés par `server.py`) :
 premier appui, le bouton passe à « Confirmer ? », second appui dans les 4 s pour valider.
