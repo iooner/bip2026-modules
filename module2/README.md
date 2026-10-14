@@ -70,6 +70,8 @@ Appui de 5 s sur le ✕ de l'accueil (ou touche `d` au clavier, `DEBUG_KEY`) : l
 la **zone imprimée** sur l'étiquette pour chacune (calculée comme le recadrage de l'étiquette, donc selon `CROP`
 et `LAYOUT`) ; le reste de l'image est assombri. Une caméra sans image est signalée en rouge avec la raison.
 Modifier `CROP` dans `config.js`, recharger la page et rouvrir la vue pour vérifier. « Fermer » (ou Échap) pour sortir.
+
+« Pause vernissage » (vue de réglage) : écran plein « revenez dès le 18 octobre » à la place de la borne (`pause.js`, commun aux 4 modules). L'état est gardé dans le navigateur (survit à un rechargement ou un redémarrage) ; le ✕ de l'accueil reste actif dessous, le même bouton (« Reprendre ») lève la pause.
 « Imprimer », sur chaque caméra, sort une étiquette de cette caméra par le même chemin qu'une vraie photo.
 « Redémarrer » et « Éteindre » arrêtent la borne proprement (`systemctl reboot` / `poweroff` lancés par `server.py`) :
 premier appui, le bouton passe à « Confirmer ? », second appui dans les 4 s pour valider.

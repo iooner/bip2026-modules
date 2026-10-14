@@ -219,7 +219,7 @@
 
   // Le bac est entré : on passe à l'écran de scan et on attend la photo.
   function onTrigger() {
-    if (state === "scan") return;           // un passage à la fois
+    if (state === "scan" || Pause.on) return;   // un passage à la fois ; rien pendant la pause vernissage
     const t = UI[lang], id = ++scanId;
     const n = nextCount(), now = new Date();
     const info = [String(n).padStart(4, "0"),

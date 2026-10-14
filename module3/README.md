@@ -47,6 +47,7 @@ se vide ne donnent donc qu'un scan.
   dépôt). À refaire quand le bac ou l'éclairage change. « Couleur d'origine » revient au ruban orange par défaut.
 - **Redémarrer / Éteindre** (vue de réglage) : arrêt propre de la borne par le service du kiosk
   (`kiosk/print_server.py`, `systemctl reboot` / `poweroff`). Premier appui : « Confirmer ? », second appui dans les 4 s.
+- **« Pause vernissage »** (vue de réglage) : écran plein « revenez dès le 18 octobre » à la place de la borne (`pause.js`, commun aux 4 modules). L'état est gardé dans le navigateur (survit à un rechargement ou un redémarrage) ; le ✕ de l'accueil reste actif dessous, le même bouton (« Reprendre ») lève la pause. Pendant la pause, un passage dans le scanner est ignoré.
 - **Bac vide** : une fois appris, un bac vide n'est pas scanné ; l'écran des consignes le dit, et le scan part dès
   qu'on y pose quelque chose. La photo ne garde que le fond du bac (bordure et parois rognées).
 - **Bac déjà en place au lancement** : pas scanné (20 premières secondes). **Webcam débranchée** : bandeau

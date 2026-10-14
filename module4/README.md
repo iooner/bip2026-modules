@@ -48,6 +48,8 @@ décor est rangé dans `~/.cache/bip2026/kinect-fond.npy`.
 par le service du kiosk (`kiosk/print_server.py`, `systemctl reboot` / `poweroff`) : premier appui, le bouton
 passe à « Confirmer ? », second appui dans les 4 s pour valider.
 
+« Pause vernissage » (vue de réglage) : écran plein « revenez dès le 18 octobre » à la place de la borne (`pause.js`, commun aux 4 modules). L'état est gardé dans le navigateur (survit à un rechargement ou un redémarrage) ; le ✕ de l'accueil reste actif dessous, le même bouton (« Reprendre ») lève la pause.
+
 ## Sources du pont
 
 ```

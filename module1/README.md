@@ -17,6 +17,8 @@ Appui de 5 s sur le ✕ de l'accueil. « Redémarrer » et « Éteindre » arrê
 kiosk (`kiosk/print_server.py` : `systemctl reboot` / `poweroff`) : premier appui, le bouton passe à « Confirmer ? »,
 second appui dans les 4 s pour valider. « Fermer » (ou Échap) pour sortir.
 
+« Pause vernissage » (vue de réglage) : écran plein « revenez dès le 18 octobre » à la place de la borne (`pause.js`, commun aux 4 modules). L'état est gardé dans le navigateur (survit à un rechargement ou un redémarrage) ; le ✕ de l'accueil reste actif dessous, le même bouton (« Reprendre ») lève la pause.
+
 ## Contenu
 Source : `tools/BIP2026_testpersonnalite.xlsx`. Après modification du tableau :
 `pip install openpyxl && python3 tools/build_content.py` (régénère `content.js`).
