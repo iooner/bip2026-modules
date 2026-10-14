@@ -205,4 +205,12 @@ em { font-style: italic; }
 #pause p { margin: 0; }
 #pause .big { font-size: 5vh; line-height: 1.3; font-weight: 500; color: #deb6b4; }
 #pause .en { font-size: 3.6vh; line-height: 1.3; font-style: italic; opacity: .85; }
+/* Balancement du lettrage, plus ample que sur l'accueil */
+#pause img { transform-origin: 50% 60%; animation: pause-sway 4s ease-in-out infinite alternate; will-change: transform; }
+@keyframes pause-sway {
+  0%   { transform: rotate(-5deg) translate(-10px, 4px) scale(.97); }
+  50%  { transform: rotate(1deg) translate(8px, -14px) scale(1.03); }
+  100% { transform: rotate(5deg) translate(-6px, 6px) scale(.98); }
+}
+@media (prefers-reduced-motion: reduce) { #pause img { animation: none; } }
 @media print { #pause { display: none; } }
