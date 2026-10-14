@@ -3,7 +3,8 @@
 // Par défaut : en pause toute la journée du vernissage (DAY, heure locale de la borne), hors pause les autres jours.
 // Le bouton [data-pause] de la vue de réglage force l'inverse pour la journée en cours : ce choix est gardé dans le
 // navigateur (localStorage), survit à un rechargement ou à un redémarrage, et s'efface au changement de jour.
-// L'écran est sous la vue de réglage : l'appui de 5 s sur le ✕ de l'accueil reste possible à travers lui.
+// L'écran est sous la vue de réglage : l'appui de 5 s sur le ✕ de l'accueil reste possible à travers lui (un rappel
+// discret du ✕ est affiché à sa place).
 //   Pause.on   vrai quand la borne est en pause (un module peut s'en servir pour ignorer ses capteurs)
 window.Pause = (() => {
   const KEY = "bip2026-pause-vernissage", DAY = "2026-10-17";
@@ -22,14 +23,25 @@ window.Pause = (() => {
   function build() {
     box = document.createElement("div");
     box.id = "pause"; box.hidden = true;
-    box.innerHTML = `<div class="logo"><img src="assets/miroir-blanc.png" alt="Miroir Miroir"><i class="g1"></i><i class="g2"></i></div>
+    box.innerHTML = `<div class="logo"><img src="assets/miroir-blanc.png" alt="Miroir Miroir"><i class="g1"></i><i class="g2"></i></div><span class="x" aria-hidden="true">✕</span>
       <p class="big">Pour obtenir votre “Passport hack”, revenez dès le 18&nbsp;octobre.<br>À&nbsp;demain ou à très bientôt&nbsp;!</p>
       <p class="en">To get your “Passport hack”, come back on 18&nbsp;October.<br>See you tomorrow, or very soon!</p>`;
     document.body.appendChild(box);
   }
 
+  // Le ✕ de l'accueil est sous l'écran de pause : on en montre un rappel discret à la même place
+  function placeX() {
+    const x = box && box.querySelector(".x"), b = document.querySelector("#welcome .xbox");
+    if (!x) return;
+    const r = b && b.getBoundingClientRect(), ok = r && r.width > 0;
+    x.hidden = !ok;
+    if (ok) Object.assign(x.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px",
+                                     fontSize: r.height * .55 + "px" });
+  }
+
   function render() {
     if (box) box.hidden = !on;
+    if (on) placeX();
     document.querySelectorAll("[data-pause]").forEach(b => {
       b.textContent = on ? "Reprendre (fin du vernissage)" : "Pause vernissage";
       b.classList.toggle("on", on);
@@ -44,6 +56,7 @@ window.Pause = (() => {
 
   document.addEventListener("click", e => { if (e.target.closest("[data-pause]")) set(!on); });
   load();
-  addEventListener("DOMContentLoaded", () => { build(); render(); setInterval(load, 30000); });   // suit le passage à minuit
+  addEventListener("DOMContentLoaded", () => { build(); render(); setInterval(load, 30000); });
+  addEventListener("resize", () => on && placeX());   // suit le passage à minuit
   return { get on() { return on; }, set };
 })();
