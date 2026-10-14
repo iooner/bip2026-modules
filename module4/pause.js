@@ -13,8 +13,8 @@ window.Pause = (() => {
     box = document.createElement("div");
     box.id = "pause"; box.hidden = true;
     box.innerHTML = `<img src="assets/miroir-blanc.png" alt="Miroir Miroir">
-      <p class="big">Pour obtenir votre «&nbsp;passeport hack&nbsp;», revenez dès le 18&nbsp;octobre. À&nbsp;demain ou à très bientôt&nbsp;!</p>
-      <p class="en">To get your “Passeport hack”, come back on 18&nbsp;October. See you tomorrow, or very soon!</p>`;
+      <p class="big">Pour obtenir votre «&nbsp;passeport hack&nbsp;», revenez dès le 18&nbsp;octobre.<br>À&nbsp;demain ou à très bientôt&nbsp;!</p>
+      <p class="en">To get your “Passeport hack”, come back on 18&nbsp;October.<br>See you tomorrow, or very soon!</p>`;
     document.body.appendChild(box);
   }
 
