@@ -101,6 +101,9 @@
   for (const e of ["pointerup", "pointercancel"]) addEventListener(e, () => clearTimeout(pressTimer), true);
   $("#debug .close").addEventListener("click", () => setDebug(false));
   $("#debug .learn").addEventListener("click", () => { setDebug(false); learnBackground(); });
+  $("#debug .tilt").addEventListener("click", () => {
+    $("#debug .msg").textContent = T.tilt() ? "Kinect remise à son inclinaison réglée." : "Pont Kinect absent.";
+  });
   addEventListener("keydown", e => { if (e.key === "Escape") setDebug(false); });
 
   // Le corps est-il centré sur la croix ?
