@@ -3,6 +3,8 @@
 Biennale de l'Image Possible, Liège (17.10–13.12.2026). Un dossier par module, chacun est une app web
 statique FR/EN lancée en kiosk sur sa borne (écran tactile Elo 1024×768), qui imprime une étiquette 59×102 mm.
 
+Un article technique sur le projet est publié sur le blog : [iooner.io/bip2026-miroir-miroir](https://iooner.io/bip2026-miroir-miroir).
+
 | Dossier | Module (FR / EN) | Borne |
 |---|---|---|
 | [`module1/`](module1/README.md) | Le vrai test psychométrique / The Real Psychometric Test : 8 questions, 4 résultats imprimés | Raspberry Pi 4 |
