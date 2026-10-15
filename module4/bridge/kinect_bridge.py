@@ -421,6 +421,10 @@ async def main(a):
                     m = json.loads(raw)
                     if m.get("cmd") == "session" and getattr(src, "ring", None) and a.keep_sessions:
                         asyncio.get_running_loop().run_in_executor(None, src.save_session)
+                    # {"cmd": "tilt"} : remet la Kinect à l'inclinaison de --tilt (si quelqu'un l'a bougée à la main)
+                    if m.get("cmd") == "tilt" and hasattr(src, "tilt") and a.tilt is not None:
+                        await asyncio.to_thread(src.tilt, a.tilt)
+                        print("Kinect recalée à", a.tilt, "°", flush=True)
                     if m.get("cmd") == "learn" and hasattr(src, "learn_at"):
                         src.learn_at = time.time() + float(m.get("delay", 5))
                         print("Décor : réapprentissage demandé", flush=True)
