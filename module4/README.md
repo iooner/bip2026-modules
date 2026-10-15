@@ -50,6 +50,14 @@ passe à « Confirmer ? », second appui dans les 4 s pour valider.
 
 « Pause vernissage » : écran plein « revenez dès le 18 octobre » à la place de la borne (`pause.js`, commun aux 4 modules). Les autres jours, une pause manuelle affiche « Ce module est actuellement en pause. Désolé pour la gêne occasionnée. » (FR/EN). Active par défaut toute la journée du 17 octobre 2026 (`DAY`, heure de la borne), inactive les autres jours. Le bouton de la vue de réglage force l'inverse pour la journée en cours (gardé dans le navigateur : survit à un rechargement ou un redémarrage) ; le ✕ de l'accueil reste actif sous l'écran de pause.
 
+## Réglage sur place
+
+Kinect à environ **2,2 m du carré violet** au sol (la consigne donnée au public). Pont lancé avec `--tilt -8` (pieds
+visibles, mains levées encore suivies) et `--near 1.6 --far 3.0`. Ces réglages vivent sur le PC dans
+`~/bip2026-local/kinect-bridge.sh`.
+
+![Cadrage Kinect : 15 images avec squelette, bras levés](docs/cadrage-kinect.jpg)
+
 ## Sources du pont
 
 ```
