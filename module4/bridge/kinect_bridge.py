@@ -454,11 +454,17 @@ async def main(a):
             if not bodies:
                 smooth.clear()
             msg = json.dumps({"bodies": bodies})
-            for ws in list(clients):
+
+            async def push(ws):
+                # Un client qui ne lit plus bloquerait ws.send pour toujours et figerait le pont : on le coupe,
+                # la page se reconnecte d'elle-même.
                 try:
-                    await ws.send(msg)
+                    await asyncio.wait_for(ws.send(msg), a.send_timeout)
                 except Exception:
                     clients.discard(ws)
+                    if getattr(ws, "transport", None):
+                        ws.transport.abort()
+            await asyncio.gather(*(push(ws) for ws in list(clients)))
             await asyncio.sleep(max(0, 1 / a.fps - (time.time() - t)))
 
 
@@ -468,6 +474,7 @@ if __name__ == "__main__":
     ap.add_argument("--host", default="localhost")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--fps", type=float, default=30)
+    ap.add_argument("--send-timeout", type=float, default=1, help="délai maxi d'envoi à un client (s), au-delà il est coupé")
     ap.add_argument("--near", type=float, default=1.2, help="distance mini de la personne (m)")
     ap.add_argument("--far", type=float, default=3.5, help="distance maxi (m), au-delà = décor")
     ap.add_argument("--background", default="~/.cache/bip2026/kinect-fond.npy",
