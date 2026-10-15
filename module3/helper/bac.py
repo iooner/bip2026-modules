@@ -2,7 +2,7 @@
 
   python3 bac.py [/dev/video0]      # essai : écrit /tmp/bac-debug.jpg (bac en vert) et affiche la cadence
 """
-import fcntl, json, os, struct
+import fcntl, json, os, struct, threading
 import cv2, numpy as np
 
 # Couleur de la bordure (teinte OpenCV 0…180, de h_lo à h_hi en passant par 0 si h_lo > h_hi ; saturation et
@@ -224,25 +224,51 @@ def redresse(frame, quad, inset=0.01, crop=None):
     return out
 
 
-def ouvre(dev, size):
-    """Webcam en MJPG (seul format qui tient 30 i/s en HD sur USB 2)."""
+def ouvre(dev, size, focus="auto"):
+    """Webcam en MJPG (seul format qui tient 30 i/s en HD sur USB 2). focus : voir mise_au_point()."""
     cap = cv2.VideoCapture(dev, cv2.CAP_V4L2)
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, size[0]); cap.set(cv2.CAP_PROP_FRAME_HEIGHT, size[1])
     cap.set(cv2.CAP_PROP_FPS, 30)
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
     secteur_50hz(dev)
+    mise_au_point(dev, focus)
     return cap
+
+
+def _ctrl(dev, cid, value):
+    """VIDIOC_S_CTRL : règle un contrôle V4L2 qu'OpenCV n'expose pas de façon fiable."""
+    fd = os.open(dev if isinstance(dev, str) else f"/dev/video{dev}", os.O_RDWR)
+    try:
+        fcntl.ioctl(fd, 0xC008561C, struct.pack("Ii", cid, value))
+    finally:
+        os.close(fd)
+
+
+def mise_au_point(dev, focus):
+    """Mise au point fixe : l'autofocus continu de la C920 « pompe » quand une main ou un sac passe dans le champ.
+    focus = nombre (0-250, pas de 5 sur la C920 ; trouver la valeur avec v4l2-ctl -c focus_absolute=N) : fixée à
+    cette valeur ; « auto » (défaut) : l'autofocus fait le point quelques secondes sur le bac vide, puis il est
+    verrouillé ; « continu » : autofocus laissé tel quel."""
+    AUTO, ABSOLU = 0x009A090C, 0x009A090A      # V4L2_CID_FOCUS_AUTO, V4L2_CID_FOCUS_ABSOLUTE
+    try:
+        if focus == "continu":
+            return _ctrl(dev, AUTO, 1)
+        if focus == "auto":
+            _ctrl(dev, AUTO, 1)
+            return threading.Timer(4, mise_au_point, [dev, "verrou"]).start()
+        _ctrl(dev, AUTO, 0)
+        if focus != "verrou":
+            _ctrl(dev, ABSOLU, int(focus))
+        print("Mise au point verrouillée" + ("" if focus == "verrou" else f" à {focus}"), flush=True)
+    except (OSError, ValueError) as e:
+        print("Mise au point fixe non appliquée :", e, flush=True)
 
 
 def secteur_50hz(dev):
     """Anti-scintillement calé sur le secteur 50 Hz : la C920 démarre en 60 Hz, d'où des bandes sombres sous l'éclairage."""
     try:  # VIDIOC_S_CTRL, V4L2_CID_POWER_LINE_FREQUENCY = 1 (50 Hz) ; OpenCV n'expose pas ce réglage
-        fd = os.open(dev if isinstance(dev, str) else f"/dev/video{dev}", os.O_RDWR)
-        try:
-            fcntl.ioctl(fd, 0xC008561C, struct.pack("Ii", 0x00980918, 1))
-        finally:
-            os.close(fd)
+        _ctrl(dev, 0x00980918, 1)
     except OSError as e:
         print("Anti-scintillement 50 Hz non appliqué :", e, flush=True)
 
