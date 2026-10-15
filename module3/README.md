@@ -30,10 +30,10 @@ automatiquement à côté de Chromium par `kiosk.sh` (journal : `/tmp/bip2026-mo
 le repère par sa **bordure orange** : dès que le bac entier est visible et que plus rien ne bouge dedans depuis
 `--stable` secondes (1,5 par défaut), c'est un passage, et la photo est recadrée sur l'intérieur du bac.
 
-**Mise au point** : l'autofocus continu de la webcam décroche quand une main ou un sac passe. Par défaut
-(`--focus auto`), elle fait le point 4 s sur le bac vide au démarrage du helper, puis la mise au point est
-verrouillée. `--focus N` la fixe à une valeur (0-250, pas de 5 ; à chercher sur place avec
-`v4l2-ctl -d /dev/video0 -c focus_automatic_continuous=0 -c focus_absolute=N`), `--focus continu` garde l'autofocus.
+**Mise au point** : l'autofocus continu de la webcam décroche quand une main ou un sac passe. Elle est donc
+fixée à `--focus 0` par défaut (le plus net sur la borne, comparé sur place à 9 réglages). `--focus N` pour une
+autre valeur (0-250, pas de 5 ; essai : `v4l2-ctl -d /dev/video0 -c focus_automatic_continuous=0 -c focus_absolute=N`),
+`--focus auto` : point fait 4 s sur le bac vide au démarrage puis verrouillé, `--focus continu` : autofocus.
 
 Un bac n'est scanné qu'une fois. Le passage suivant demande que le bac sorte du champ (`--absent`, 1,5 s), ou
 qu'il soit poussé par un autre bac : le helper garde une empreinte du contenu scanné et ne rescanne un bac

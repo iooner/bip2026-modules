@@ -224,7 +224,7 @@ def redresse(frame, quad, inset=0.01, crop=None):
     return out
 
 
-def ouvre(dev, size, focus="auto"):
+def ouvre(dev, size, focus="0"):
     """Webcam en MJPG (seul format qui tient 30 i/s en HD sur USB 2). focus : voir mise_au_point()."""
     cap = cv2.VideoCapture(dev, cv2.CAP_V4L2)
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
@@ -248,8 +248,8 @@ def _ctrl(dev, cid, value):
 def mise_au_point(dev, focus):
     """Mise au point fixe : l'autofocus continu de la C920 « pompe » quand une main ou un sac passe dans le champ.
     focus = nombre (0-250, pas de 5 sur la C920 ; trouver la valeur avec v4l2-ctl -c focus_absolute=N) : fixée à
-    cette valeur ; « auto » (défaut) : l'autofocus fait le point quelques secondes sur le bac vide, puis il est
-    verrouillé ; « continu » : autofocus laissé tel quel."""
+    cette valeur (0 sur la borne : le plus net, comparé sur place) ; « auto » : l'autofocus fait le point quelques
+    secondes sur le bac vide, puis il est verrouillé ; « continu » : autofocus laissé tel quel."""
     AUTO, ABSOLU = 0x009A090C, 0x009A090A      # V4L2_CID_FOCUS_AUTO, V4L2_CID_FOCUS_ABSOLUTE
     try:
         if focus == "continu":

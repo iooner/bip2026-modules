@@ -397,9 +397,9 @@ def main():
     p.add_argument("--cam-size", default="1280x720", help="résolution de la webcam, défaut 1280x720")
     p.add_argument("--stable", type=float, default=1.5, help="webcam : bac immobile depuis ce temps = passage (s)")
     p.add_argument("--absent", type=float, default=1.5, help="webcam : bac retiré depuis ce temps = réarmé (s)")
-    p.add_argument("--focus", default="auto", metavar="N|auto|continu",
-                   help="webcam : mise au point fixe à N (0-250, pas de 5) ; auto (défaut) : point fait sur le bac "
-                        "vide au démarrage puis verrouillé ; continu : autofocus permanent (ancien comportement)")
+    p.add_argument("--focus", default="0", metavar="N|auto|continu",
+                   help="webcam : mise au point fixe à N (0-250, pas de 5 ; défaut 0, le plus net sur la borne) ; "
+                        "auto : point fait sur le bac vide au démarrage puis verrouillé ; continu : autofocus permanent")
     p.add_argument("--inset", type=float, default=0.01, help="webcam : part de la photo rognée sur chaque bord")
     args = p.parse_args()
 
