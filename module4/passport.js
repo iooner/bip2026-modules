@@ -3,6 +3,7 @@
 //   Oui → le module continue comme avant (rappel passé à Passport.ask) ;
 //   Non → on l'invite à passer à l'accueil, puis retour au choix de langue par le bouton ou après NO_BACK_S secondes.
 // Sans réponse, la question elle-même se referme après ASK_IDLE_S secondes (retour au choix de langue).
+// Le volet « Miroir Miroir » du passeport (assets/passport-hack.png, tiré du PDF) flotte, incliné, à droite.
 // L'écran se pose par-dessus l'accueil, dans la scène 1024×768 (#stage) : il suit sa mise à l'échelle.
 //   Passport.ask(lang, next)   affiche la question dans la langue choisie ; next() si « Oui »
 //   Passport.close()           referme l'écran (retour au choix de langue)
@@ -21,7 +22,7 @@ window.Passport = (() => {
   function build() {
     box = document.createElement("section");
     box.id = "passport"; box.hidden = true;
-    box.innerHTML = `<img class="lettering" src="assets/miroir-blanc.png" alt="">
+    box.innerHTML = `<div class="pass"><img src="assets/passport-hack.png" alt="Passport hack"></div>
       <div class="ask"><h2 class="q"></h2><div class="btns"><button class="yes"></button><button class="no"></button></div></div>
       <div class="nope"><h2 class="info"></h2><button class="back"></button><p class="auto"></p></div>`;
     (document.querySelector("#stage") || document.body).appendChild(box);
