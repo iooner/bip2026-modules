@@ -52,7 +52,7 @@
 
   function reset() {
     clearTimeout(idleTimer); clearTimeout(resultTimer);
-    show("welcome");
+    Passport.close(); show("welcome");
   }
 
   // --- Accueil ---
@@ -62,7 +62,7 @@
     document.querySelectorAll("[data-t]").forEach(el => { el.textContent = UI[lang][el.dataset.t]; });
     $(".restart").setAttribute("aria-label", UI[lang].restart);
     console.log("Source du corps :", T.sourceName());
-    holdSince = 0; show("place"); poke();
+    Passport.ask(lang, () => { holdSince = 0; show("place"); poke(); });   // « Passport hack » d'abord
   }));
   $(".restart").addEventListener("click", reset);
   $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue
