@@ -67,14 +67,14 @@
 
   function reset() {
     clearTimeout(idleTimer); clearTimeout(resultTimer);
-    busy = false; show("welcome");
+    busy = false; Passport.close(); show("welcome");
   }
 
   // --- Accueil ---
   document.querySelectorAll(".lang").forEach(b => b.addEventListener("click", () => {
     lang = b.dataset.lang; step = 0; picks = [];
     document.documentElement.lang = lang;
-    renderQuestion(); show("question"); poke();
+    Passport.ask(lang, () => { renderQuestion(); show("question"); poke(); });   // « Passport hack » d'abord
   }));
   $(".restart").addEventListener("click", reset);
 

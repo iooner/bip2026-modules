@@ -145,7 +145,7 @@
     clearTimeout(resultTimer); clearTimeout(photoTimer);
     scanId++; lang = "fr"; document.documentElement.lang = lang;
     $("#scan").className = "screen";
-    show("welcome");
+    Passport.close(); show("welcome");
   }
 
   // --- Accueil et consignes ---
@@ -178,7 +178,7 @@
   }
   document.querySelectorAll(".lang").forEach(b => b.addEventListener("click", () => {
     lang = b.dataset.lang; document.documentElement.lang = lang;
-    renderSteps(); show("steps");
+    Passport.ask(lang, () => { renderSteps(); show("steps"); });   // « Passport hack » d'abord
   }));
   $(".restart").addEventListener("click", reset);
   $("#scan .home").addEventListener("click", reset);    // écran « autorisé » : retour immédiat à l'accueil

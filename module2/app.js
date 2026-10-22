@@ -75,7 +75,7 @@
   function reset() {
     clearTimeout(idleTimer); clearTimeout(resultTimer);
     busy = false; $("#shoot").classList.remove("counting");
-    show("welcome");
+    Passport.close(); show("welcome");
   }
 
   // --- Accueil ---
@@ -86,7 +86,7 @@
     $("#shoot .hint").textContent = t.hint;
     $("#shoot .take").textContent = t.take;
     $("#shoot .name").textContent = $(".l-title").textContent = t.title;
-    show("shoot"); poke();
+    Passport.ask(lang, () => { show("shoot"); poke(); });   // « Passport hack » d'abord
   }));
   $(".restart").addEventListener("click", reset);
   $(".done").addEventListener("click", reset);   // « Terminé » : retour au choix de langue

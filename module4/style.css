@@ -204,3 +204,19 @@ em { font-style: italic; }
 }
 @media (prefers-reduced-motion: reduce) { #pause .logo, #pause .logo img, #pause .logo i { animation: none; } }
 @media print { #pause { display: none; } }
+
+/* Étape « Passport hack » (passport.js) : par-dessus l'accueil, juste après le choix de langue */
+#passport { position: absolute; inset: 0; z-index: 10; padding: 48px 64px; display: flex; flex-direction: column;
+  justify-content: center; background: var(--navy); color: #fff; font-family: var(--font); }
+#passport[hidden] { display: none; }
+#passport .lettering { position: absolute; right: 48px; top: 36px; height: 150px; opacity: .9; }
+#passport .ask, #passport .nope { display: none; max-width: 760px; }
+#passport.ask .ask, #passport.nope .nope { display: block; }
+#passport h2 { font-size: 48px; font-weight: 500; line-height: 1.2; color: var(--pink); }
+#passport .nope h2 { font-size: 38px; }
+#passport .btns { margin-top: 56px; display: flex; gap: 24px; }
+#passport button { height: 104px; min-width: 260px; padding: 0 40px; background: var(--pink); color: var(--navy);
+  font-size: 34px; font-weight: 500; transition: transform .1s, background .1s; }
+#passport button:active { transform: scale(.97); background: var(--mauve); color: #fff; }
+#passport .back { margin-top: 56px; }
+#passport .auto { margin-top: 24px; font-size: 20px; color: var(--grey); }
